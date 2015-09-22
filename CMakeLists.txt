@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(baskin_steering)
+project(drive_stack)
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
@@ -9,6 +9,7 @@ find_package(catkin REQUIRED COMPONENTS
   rospy
   std_msgs
   geometry_msgs
+  nav_msgs
   message_generation
 )
 
@@ -49,9 +50,6 @@ find_package(catkin REQUIRED COMPONENTS
  add_message_files(
    FILES
 #   Message1.msg
-   CmdPose.msg
-   Sensor.msg
-   VelCmd.msg
  )
 
 ## Generate services in the 'srv' folder
@@ -73,6 +71,7 @@ find_package(catkin REQUIRED COMPONENTS
    DEPENDENCIES
    std_msgs
    geometry_msgs
+   nav_msgs
  )
 
 ###################################
@@ -86,8 +85,8 @@ find_package(catkin REQUIRED COMPONENTS
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
 #  INCLUDE_DIRS include
-#  LIBRARIES baskin_steering
-  CATKIN_DEPENDS roscpp rospy std_msgs geometry_msgs message_runtime
+#  LIBRARIES drive_stack
+  CATKIN_DEPENDS roscpp rospy std_msgs geometry_msgs nav_msgs message_runtime
 #  DEPENDS system_lib
 
 )
@@ -104,31 +103,29 @@ include_directories(
 )
 
 ## Declare a cpp library
-# add_library(baskin_steering
-#   src/${PROJECT_NAME}/baskin_steering.cpp
+# add_library(drive_stack
+#   src/${PROJECT_NAME}/drive_stack.cpp
 # )
 
 ## Declare a cpp executable
-add_executable(baskin_steering src/baskin_steering.cpp)
-add_executable(baskin_localization src/baskin_localization.cpp)
-add_executable(baskin_controller src/baskin_controller.cpp)
+# add_executable(baskin_steering src/baskin_steering.cpp)
 
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes
-add_dependencies(baskin_steering baskin_steering_generate_messages_cpp)
+# add_dependencies(baskin_steering baskin_steering_generate_messages_cpp)
 
 ## Specify libraries to link a library or executable target against
 target_link_libraries(
-   baskin_controller 
+#   baskin_controller 
    ${catkin_LIBRARIES}
 )
 target_link_libraries(
-   baskin_steering
+#   baskin_steering
    ${catkin_LIBRARIES}
 )
 
 target_link_libraries(
-   baskin_localization
+#   baskin_localization
    ${catkin_LIBRARIES}
 )
 
