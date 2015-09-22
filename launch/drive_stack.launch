@@ -1,0 +1,18 @@
+<launch>
+	<node
+		pkg="drive_stack"
+		type="path.py"
+		name="default_path"
+		respawn="true"
+	></node>
+	<node
+		pkg="drive_stack"
+		type="leader.py"
+		name="default_leader"
+	></node>
+	<node
+		pkg="drive_stack"
+		type="driver.py"
+		name="default_driver"
+	></node>
+</launch>
