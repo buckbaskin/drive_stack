@@ -21,6 +21,13 @@ Copyright 2015 William Baskin
  Leader node that takes the published goals, and then generates
  Odometry targets between them for the robot to follow (think carrot
  on a stick).
+
+ Interface:
+ srv/path/goal - returns current goal
+ srv/path/next - moves path to next goal, returns that goal
+ srv/path/start - returns starting goal
+ srv/path/back - moves path to previous goal, returns that goal
+ msg/path/current - publishes current goal
  ''' #pylint: disable=pointless-string-statement
 
 import rospy
