@@ -35,43 +35,43 @@ from nav_msgs.msg import Odometry
 import drive_stack
 
 class Path(object):
-	def __init__(self):
-		self.path = []
-		self.path.append(Odometry(x = 0, y = 1)) # TODO(buckbaskin): change
-		self.path.append(Odometry(x = 0, y = 2)) # TODO(buckbaskin): change	
-		self.path.append(Odometry(x = 0, y = 3)) # TODO(buckbaskin): change	
-		self.index = 0
+    def __init__(self):
+        self.path = []
+        self.path.append(Odometry(x = 0, y = 1)) # TODO(buckbaskin): change
+        self.path.append(Odometry(x = 0, y = 2)) # TODO(buckbaskin): change 
+        self.path.append(Odometry(x = 0, y = 3)) # TODO(buckbaskin): change 
+        self.index = 0
 
-	def goal_callback(self):
-		return drive_stack.srv.GoalResponse(self.path[self.index+1])
+    def goal_callback(self):
+        return drive_stack.srv.GoalResponse(self.path[self.index+1])
 
-	def next_callback(self):
-		if len(self.path) > self.index+2:
-			self.index += 1
-		return self.goal_callback()
+    def next_callback(self):
+        if len(self.path) > self.index+2:
+            self.index += 1
+        return self.goal_callback()
 
-	def start_callback(self):
-		return drive_stack.srv.GoalResponse(self.path[self.index])
+    def start_callback(self):
+        return drive_stack.srv.GoalResponse(self.path[self.index])
 
-	def back_callback(self):
-		self.index += -1
-		if self.index < 0:
-			self.index = 0
-		return self.goal_callback()
+    def back_callback(self):
+        self.index += -1
+        if self.index < 0:
+            self.index = 0
+        return self.goal_callback()
 
-	def current(self):
-		return self.goal_callback()
+    def current(self):
+        return self.goal_callback()
 
-	def run_server(self):
-		rospy.init_node('default_path')
-		goal = rospy.Service('/path/goal', drive_stack.srv.Goal, goal_callback)
-		next = rospy.Service('/path/next', drive_stack.srv.Goal, next_callback)
-		start = rospy.Service('/path/start', drive_stack.srv.Goal, start_callback)
-		back = rospy.Service('/path/back', drive_stack.srv.Goal, back_callback)
-		current = rospy.Publisher('/path/current', Odometry, queue_size=1)
-		
-		rt = rospy.rate(10)
+    def run_server(self):
+        rospy.init_node('default_path')
+        goal = rospy.Service('/path/goal', drive_stack.srv.Goal, goal_callback)
+        next = rospy.Service('/path/next', drive_stack.srv.Goal, next_callback)
+        start = rospy.Service('/path/start', drive_stack.srv.Goal, start_callback)
+        back = rospy.Service('/path/back', drive_stack.srv.Goal, back_callback)
+        current = rospy.Publisher('/path/current', Odometry, queue_size=1)
+        
+        rt = rospy.rate(10)
 
-		while not rospy.is_shutdown():
-			current.publish(self.current())
-			rt.sleep()
+        while not rospy.is_shutdown():
+            current.publish(self.current())
+            rt.sleep()
