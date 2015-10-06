@@ -104,8 +104,8 @@ class Path(object):
         self.rolling.publish(self.next_rolling_pub())
 
     def run_server(self):
-        self.init_server()
         self.wait_for_services()
+        self.init_server()
         rt = rospy.rate(10)
         while not rospy.is_shutdown():
             self.publish_path_interface()
