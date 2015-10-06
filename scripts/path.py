@@ -12,8 +12,7 @@ Copyright 2015 William Baskin
     complete license.
 
  *****************************************/
- '''
- '''
+ 
  Path
 
  This is a class that generates high level goals in the map frame
@@ -28,6 +27,11 @@ Copyright 2015 William Baskin
  srv/path/start - returns starting goal
  srv/path/back - moves path to previous goal, returns that goal
  msg/path/current - publishes current goal
+
+ TODO Summary:
+
+ Implement a non-trivial path for example purposes
+
  ''' #pylint: disable=pointless-string-statement
 
 import rospy
@@ -37,10 +41,13 @@ import drive_stack
 class Path(object):
     def __init__(self):
         self.path = []
+        self.frame = 'map'
         self.path.append(Odometry(x = 0, y = 1)) # TODO(buckbaskin): change
         self.path.append(Odometry(x = 0, y = 2)) # TODO(buckbaskin): change 
         self.path.append(Odometry(x = 0, y = 3)) # TODO(buckbaskin): change 
         self.index = 0
+
+        self.rolling_index = -1
 
     def goal_callback(self):
         return drive_stack.srv.GoalResponse(self.path[self.index+1])
@@ -62,6 +69,11 @@ class Path(object):
     def current(self):
         return self.goal_callback()
 
+    def next_rolling_pub(self):
+        self.rolling_index += 1
+        self.rolling_index = self.rolling_index % len(self.path)
+        return path[rolling_index]
+
     def run_server(self):
         rospy.init_node('default_path')
         goal = rospy.Service('/path/goal', drive_stack.srv.Goal, goal_callback)
@@ -69,9 +81,11 @@ class Path(object):
         start = rospy.Service('/path/start', drive_stack.srv.Goal, start_callback)
         back = rospy.Service('/path/back', drive_stack.srv.Goal, back_callback)
         current = rospy.Publisher('/path/current', Odometry, queue_size=1)
+        rolling = rospy.Publisher('/path/rolling', Odometry, queue_size=1)
         
         rt = rospy.rate(10)
 
         while not rospy.is_shutdown():
             current.publish(self.current())
+            rolling.publish(self.next_rolling_pub())
             rt.sleep()
