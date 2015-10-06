@@ -69,6 +69,9 @@ class Path(object):
     def current(self):
         return self.goal_callback()
 
+    def start(self):
+        return self.start_callback()
+
     def next_rolling_pub(self):
         self.rolling_index += 1
         self.rolling_index = self.rolling_index % len(self.path)
@@ -81,11 +84,13 @@ class Path(object):
         start = rospy.Service('/path/start', drive_stack.srv.Goal, start_callback)
         back = rospy.Service('/path/back', drive_stack.srv.Goal, back_callback)
         current = rospy.Publisher('/path/current', Odometry, queue_size=1)
+        start_pub = rospy.Publisher('/path/start_goal', Odometry, queue_size=1)
         rolling = rospy.Publisher('/path/rolling', Odometry, queue_size=1)
         
         rt = rospy.rate(10)
 
         while not rospy.is_shutdown():
             current.publish(self.current())
+            start_pub.publish(self.start())
             rolling.publish(self.next_rolling_pub())
             rt.sleep()
