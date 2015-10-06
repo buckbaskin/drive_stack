@@ -77,20 +77,24 @@ class Path(object):
         self.rolling_index = self.rolling_index % len(self.path)
         return path[rolling_index]
 
-    def run_server(self):
+    def init_server(self):
         rospy.init_node('default_path')
-        goal = rospy.Service('/path/goal', drive_stack.srv.Goal, goal_callback)
-        next = rospy.Service('/path/next', drive_stack.srv.Goal, next_callback)
-        start = rospy.Service('/path/start', drive_stack.srv.Goal, start_callback)
-        back = rospy.Service('/path/back', drive_stack.srv.Goal, back_callback)
-        current = rospy.Publisher('/path/current', Odometry, queue_size=1)
-        start_pub = rospy.Publisher('/path/start_goal', Odometry, queue_size=1)
-        rolling = rospy.Publisher('/path/rolling', Odometry, queue_size=1)
-        
-        rt = rospy.rate(10)
+        self.goal = rospy.Service('/path/goal', drive_stack.srv.Goal, goal_callback)
+        self.next = rospy.Service('/path/next', drive_stack.srv.Goal, next_callback)
+        self.start = rospy.Service('/path/start', drive_stack.srv.Goal, start_callback)
+        self.back = rospy.Service('/path/back', drive_stack.srv.Goal, back_callback)
+        self.current = rospy.Publisher('/path/current', Odometry, queue_size=1)
+        self.start_pub = rospy.Publisher('/path/start_goal', Odometry, queue_size=1)
+        self.rolling = rospy.Publisher('/path/rolling', Odometry, queue_size=1)
 
+    def publish_path_interface(self):
+        self.current.publish(self.current())
+        self.start_pub.publish(self.start())
+        self.rolling.publish(self.next_rolling_pub())
+
+    def run_server(self):
+        self.init_server()
+        rt = rospy.rate(10)
         while not rospy.is_shutdown():
-            current.publish(self.current())
-            start_pub.publish(self.start())
-            rolling.publish(self.next_rolling_pub())
+            self.publish_path_interface()
             rt.sleep()
