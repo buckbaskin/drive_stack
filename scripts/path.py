@@ -49,6 +49,8 @@ class Path(object):
 
         self.rolling_index = -1
 
+    # Pub/Sub/Service functionality
+
     def goal_callback(self):
         return drive_stack.srv.GoalResponse(self.path[self.index+1])
 
@@ -77,6 +79,15 @@ class Path(object):
         self.rolling_index = self.rolling_index % len(self.path)
         return path[rolling_index]
 
+    # Server/running management
+
+    def wait_for_services(self):
+        # OVERRIDE this method to have the node wait for a service or services
+        #  before offering its own and beginning publishing. Be careful, because
+        #  multiple nodes waiting on each other will maintain blocking calls
+        #  indefinitely.
+        pass
+
     def init_server(self):
         rospy.init_node('default_path')
         self.goal = rospy.Service('/path/goal', drive_stack.srv.Goal, goal_callback)
@@ -94,6 +105,7 @@ class Path(object):
 
     def run_server(self):
         self.init_server()
+        self.wait_for_services()
         rt = rospy.rate(10)
         while not rospy.is_shutdown():
             self.publish_path_interface()
