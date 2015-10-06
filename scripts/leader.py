@@ -48,7 +48,7 @@ class Leader(object):
                 self.index = 0
             return self.goal_callback()
         else:
-            self.generate_next_path()
+            self.generate_next_path(False) # don't reverse
             return self.goal_callback()
 
 
@@ -59,9 +59,12 @@ class Leader(object):
         self.index += -1
         if len(self.targets) <= self.index+1:
             self.index = len(self.targets) - 2
-        if self.index < 0:
-            self.index = 0
-        return self.goal_callback()
+            if self.index < 0:
+                self.index = 0
+            return self.goal_callback()
+        else:
+            self.generate_next_path(True) # do reverse next path
+            return self.goal_callback()
 
     def current(self):
         return self.goal_callback()
@@ -91,6 +94,8 @@ class Leader(object):
         rospy.wait_for_service('/path/next')
         rospy.wait_for_service('/path/start')
         rospy.wait_for_service('/path/back')
+
+        # Assign callables for the Path services
         self.path_goal = rospy.ServiceProxy('/path/goal')
         self.path_next = rospy.ServiceProxy('/path/next')
         self.path_start = rospy.ServiceProxy('/path/start')
@@ -99,7 +104,7 @@ class Leader(object):
     def init_server(self):
         rospy.init_node('default_path')
 
-        self.generate_path()
+        self.generate_initial_path()
 
         self.goal = rospy.Service('/lead/goal', drive_stack.srv.Goal, goal_callback)
         self.next = rospy.Service('/lead/next', drive_stack.srv.Goal, next_callback)
@@ -123,10 +128,15 @@ class Leader(object):
 
     def generate_next_path(self, rvs):
         # TODO(buckbaskin): change to getting path from Path, generating intermediate points
-        # TODO(buckbaskin): if rvs: generate a path to the previous Path goal
-        # TODO(buckbaskin): else: generate a path to the next Path goal
-        end = self.path_next()
-        start = self.path_start()
+        # if rvs: restart the current Path segment between goals
+        # else: generate a path to the next Path goal
+        if not rvs:
+            end = self.path_next()
+            start = self.path_start()
+        else:
+            # restart the current segment
+            start = self.path_start()
+            end = start.path_goal()
 
         self.path = []
         self.path.append(Odometry(x = 0, y = 1))
