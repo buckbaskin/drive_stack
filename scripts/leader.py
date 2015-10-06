@@ -120,29 +120,32 @@ class Leader(object):
         end = self.path_goal()
         start = self.path_start()
 
-        self.path = []
-        self.path.append(Odometry(x = 0, y = 1))
-        self.path.append(Odometry(x = 0, y = 2))
-        self.path.append(Odometry(x = 0, y = 3))
+        self.targets = []
+        self.targets.append(Odometry(x = 0, y = 1))
+        self.targets.append(Odometry(x = 0, y = 2))
+        self.targets.append(Odometry(x = 0, y = 3))
         self.index = 0
 
     def generate_next_path(self, rvs):
         # TODO(buckbaskin): change to getting path from Path, generating intermediate points
-        # if rvs: restart the current Path segment between goals
+        # if rvs: move to the previous segement on the path, starting at the end
         # else: generate a path to the next Path goal
         if not rvs:
-            end = self.path_next()
-            start = self.path_start()
+            end = self.targets_next()
+            start = self.targets_start()
         else:
-            # restart the current segment
-            start = self.path_start()
+            # move back one segment
+            start = self.targets_back()
             end = start.path_goal()
 
-        self.path = []
-        self.path.append(Odometry(x = 0, y = 1))
-        self.path.append(Odometry(x = 0, y = 2))
-        self.path.append(Odometry(x = 0, y = 3))
-        self.index = 0
+        self.targets = []
+        self.targets.append(Odometry(x = 0, y = 1))
+        self.targets.append(Odometry(x = 0, y = 2))
+        self.targets.append(Odometry(x = 0, y = 3))
+        if rvs:
+            self.index = len(self.targets)-2
+        else:
+            self.index = 0
 
     def publish_path_interface(self):
         if len(self.targets)
