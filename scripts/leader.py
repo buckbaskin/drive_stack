@@ -28,6 +28,8 @@ Copyright 2015 William Baskin
  '''
 
 import rospy
+from nav_msgs.msg import Odometry
+import drive_stack
 
 class Leader(object):
     def __init__(self):
