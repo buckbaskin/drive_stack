@@ -165,9 +165,28 @@ class Leader(object):
             end = start.path_goal()
 
         self.targets = []
-        self.targets.append(Odometry(x = 0, y = 1))
-        self.targets.append(Odometry(x = 0, y = 2))
-        self.targets.append(Odometry(x = 0, y = 3))
+        self.targets.append(start)
+
+        dt = .1
+        des_speed = .5 # m/s
+        dx = end.x - start.x
+        dy = end.y - start.y
+
+        heading = math.atan2(dy, dx)
+        dx = des_speed*math.cos(heading)*dt
+        dy = des_speed*math.sin(heading)*dt
+
+        distance = math.sqrt(dx*dx+dy*dy)
+        steps = math.floor(distance/des_speed)
+
+        for i in range(1, steps):
+            odo = Odometry()
+            odo.pose.pose.point = Point(x = start.x+i*dx, y = start.y+i*dy)
+            odo.pose.pose.orientation = heading_to_quat(heading)
+            odo.twist.twist.linear = Vector3(x = des_speed)
+            odo.twist.twist.angular = Vector3()
+            self.targets.append(odo)
+
         if rvs:
             self.index = len(self.targets)-2
         else:
