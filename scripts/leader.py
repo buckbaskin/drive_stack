@@ -205,3 +205,7 @@ class Leader(object):
         while not rospy.is_shutdown():
             self.publish_path_interface()
             rt.sleep()
+
+if __name__ == '__main__':
+    l = Leader()
+    l.run_server()

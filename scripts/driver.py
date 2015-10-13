@@ -70,3 +70,7 @@ class Driver(object):
         while not rospy.is_shutdown():
             self.cmd_vel.publish(next_cmd())
             rt.sleep()
+
+if __name__ == '__main__':
+    d = Driver()
+    d.run_node()
