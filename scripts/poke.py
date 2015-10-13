@@ -39,12 +39,12 @@ class Poke(object):
 	def test(channel = None):
 
 		if channel is None:
-			channel = input('Please enter the channel to test')
+			channel = raw_input('Please enter the channel to test:\n')
 		out = poke(channel)
 		input_from_poke = out[1]
 		output_from_poke = out[0]
 		print output_from_poke
-		success = input('Was the service call successful?')
+		success = raw_input('Was the service call successful?\n')
 		if not success:
 			self.test_failures += 1
 			self.error_log.append((channel, input_from_poke, output_from_poke, 'User rejected data',))
@@ -59,13 +59,20 @@ class Poke(object):
 			self.test_count += 1
 			test(channel)
 
-		print 'TEST SUMMARY: '
+		print 'TEST SUMMARY: \n'
 		print str(self.test_count)+' tests run'
 		print str(self.test_passes)+' tests passed'
 		print str(self.test_failures)+' tests failed'
 
 		if len(self.error_log):
-			'TEST ERRORS: '
+			'TEST ERRORS: \n'
 		for error in self.error_log:
 			print (str(error[3])+'\n'+': tried '+str(error[0])+' with data '+str(error[1])+
 				'.\n Got '+str(error[2]))
+
+def main():
+	pass
+
+if __name__ == '__main__':
+	p = Poke()
+	p.run_test()
