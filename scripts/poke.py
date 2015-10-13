@@ -27,52 +27,49 @@ import drive_stack
 from rostype import returns
 
 class Poke(object):
-	def __init__(self):
-		self.error_log = []
-		self.test_count = 0
-		self.test_passes = 0
-		self.test_failures = 0
+    def __init__(self):
+        self.error_log = []
+        self.test_count = 0
+        self.test_passes = 0
+        self.test_failures = 0
 
-	def poke(channel):
-		pass
+    def poke(channel):
+        pass
 
-	def test(channel = None):
+    def test(channel = None):
 
-		if channel is None:
-			channel = raw_input('Please enter the channel to test:\n')
-		out = poke(channel)
-		input_from_poke = out[1]
-		output_from_poke = out[0]
-		print output_from_poke
-		success = raw_input('Was the service call successful?\n')
-		if not success:
-			self.test_failures += 1
-			self.error_log.append((channel, input_from_poke, output_from_poke, 'User rejected data',))
-		else:
-			self.test_passes += 1
+        if channel is None:
+            channel = raw_input('Please enter the channel to test:\n')
+        out = poke(channel)
+        input_from_poke = out[1]
+        output_from_poke = out[0]
+        print output_from_poke
+        success = raw_input('Was the service call successful?\n')
+        if not success:
+            self.test_failures += 1
+            self.error_log.append((channel, input_from_poke, output_from_poke, 'User rejected data',))
+        else:
+            self.test_passes += 1
 
-	def run_test():
-		self.error_log = []
-		channels = []
-		channels.append('/test')
-		for channel in channels:
-			self.test_count += 1
-			test(channel)
+    def run_test():
+        self.error_log = []
+        channels = []
+        channels.append('/test')
+        for channel in channels:
+            self.test_count += 1
+            test(channel)
 
-		print 'TEST SUMMARY: \n'
-		print str(self.test_count)+' tests run'
-		print str(self.test_passes)+' tests passed'
-		print str(self.test_failures)+' tests failed'
+        print 'TEST SUMMARY: \n'
+        print str(self.test_count)+' tests run'
+        print str(self.test_passes)+' tests passed'
+        print str(self.test_failures)+' tests failed'
 
-		if len(self.error_log):
-			'TEST ERRORS: \n'
-		for error in self.error_log:
-			print (str(error[3])+'\n'+': tried '+str(error[0])+' with data '+str(error[1])+
-				'.\n Got '+str(error[2]))
-
-def main():
-	pass
+        if len(self.error_log):
+            'TEST ERRORS: \n'
+        for error in self.error_log:
+            print (str(error[3])+'\n'+': tried '+str(error[0])+' with data '+str(error[1])+
+                '.\n Got '+str(error[2]))
 
 if __name__ == '__main__':
-	p = Poke()
-	p.run_test()
+    p = Poke()
+    p.run_test()
