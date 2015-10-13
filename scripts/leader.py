@@ -31,6 +31,8 @@ import rospy
 from nav_msgs.msg import Odometry
 import drive_stack
 
+from rostype import returns
+
 class Leader(object):
     def __init__(self):
         self.targets = []
@@ -98,10 +100,13 @@ class Leader(object):
         rospy.wait_for_service('/path/back')
 
         # Assign callables for the Path services
-        self.path_goal = rospy.ServiceProxy('/path/goal')
-        self.path_next = rospy.ServiceProxy('/path/next')
-        self.path_start = rospy.ServiceProxy('/path/start')
-        self.path_back = rospy.ServiceProxy('/path/back')
+        # returns(Odometry)(func) is a decorator that I wrote that forces the 
+        #  rospy.ServiceProxy('channel') to return the proper type or throw
+        #  an error.
+        self.path_goal = returns(Odometry)(rospy.ServiceProxy('/path/goal'))
+        self.path_next = returns(Odometry)(rospy.ServiceProxy('/path/next'))
+        self.path_start = returns(Odometry)(rospy.ServiceProxy('/path/start'))
+        self.path_back = returns(Odometry)(rospy.ServiceProxy('/path/back'))
 
     def init_server(self):
         rospy.init_node('default_path')
@@ -119,13 +124,32 @@ class Leader(object):
     def generate_initial_path(self):
         # TODO(buckbaskin): change to getting path from Path, generating intermediate points
         # Note: this is called once during node initialization
-        end = self.path_goal()
-        start = self.path_start()
+        end = self.path_goal() # Odometry
+        start = self.path_start() # Odometry
 
         self.targets = []
-        self.targets.append(Odometry(x = 0, y = 1))
-        self.targets.append(Odometry(x = 0, y = 2))
-        self.targets.append(Odometry(x = 0, y = 3))
+        self.targets.append(start)
+
+        dt = .1
+        des_speed = .5 # m/s
+        dx = end.x - start.x
+        dy = end.y - start.y
+
+        heading = math.atan2(dy, dx)
+        dx = des_speed*math.cos(heading)*dt
+        dy = des_speed*math.sin(heading)*dt
+
+        distance = math.sqrt(dx*dx+dy*dy)
+        steps = math.floor(distance/des_speed)
+
+        for i in range(1, steps):
+            odo = Odometry()
+            odo.pose.pose.point = Point(x = start.x+i*dx, y = start.y+i*dy)
+            odo.pose.pose.orientation = heading_to_quat(heading)
+            odo.twist.twist.linear = Vector3(x = des_speed)
+            odo.twist.twist.angular = Vector3()
+            self.targets.append(odo)
+
         self.index = 0
 
     def generate_next_path(self, rvs):
