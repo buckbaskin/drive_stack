@@ -33,8 +33,18 @@ class WheelOdometryGenerator(object):
             arc_right = self.distance(dright)
 
             #TODO(buckbaskin): calc the arc radius to relate v, omega
+            if arc_left < arc_right:
+                r = (self.track_width/2)*((arc_right+arc_left)/(arc_right-arc_left))
+                theta = arc_left/(r-(self.track_width/2))
+            else: # arc_left > arc_right:
+                r = (self.track_width/2)*((arc_right+arc_left)/(arc_left-arc_right))
+                theta = arc_left/(r+(self.track_width/2))
+            v = ((dl+dr)/2)/dt
+            omega = theta/dt
 
         # based on v, omega, update state
+        self.update_state(v, omega)
+
         self.send_current_odom()
         self.last_enc = msg
 
@@ -62,5 +72,9 @@ class WheelOdometryGenerator(object):
 
     # GEOMETRY
 
-    def distance(ticks):
+    def distance(self, ticks):
         return ticks*1.0/self.encoders_per_rev*math.PI*self.wheel_diam
+
+    def update_state(self, v, omega):
+        # TODO(buckbaskin): do the state update thing
+        pass
