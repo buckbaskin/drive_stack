@@ -5,6 +5,7 @@ from geometry_msgs.msg import Quaternion
 from snowmower_msgs.msg import EncMsg
 
 def heading_to_quaternion(heading):
+    # TODO(buckbaskin): use transformations
     q = Quaternion()
     return q
 
@@ -47,7 +48,7 @@ class WheelOdometryGenerator(object):
             else: # arc_left > arc_right:
                 r = (self.track_width/2)*((arc_right+arc_left)/(arc_left-arc_right))
                 theta = arc_left/(r+(self.track_width/2))
-            v = ((dl+dr)/2)/dt
+            v = ((dleft+dright)/2)/dt
             omega = theta/dt
 
         # based on v, omega, update state
@@ -65,7 +66,7 @@ class WheelOdometryGenerator(object):
         o.pose.pose.position.x = self.x
         o.pose.pose.position.y = self.y
 
-        o.orientation.orientation = self.heading_to_quaternion() # (TODO(buckbaskin): implement)
+        o.pose.pose.orientation = heading_to_quaternion(self.heading)
 
         o.twist.twist.linear.x = self.v
         o.twist.twist.angular.z = self.omega
@@ -74,7 +75,7 @@ class WheelOdometryGenerator(object):
 
         self.pub.publish(o)
 
-    def start_node(self, msg):
+    def start_node(self):
         self.pub = rospy.Publisher('/odom', Odometry, queue_size=1)
         self.sub = rospy.Subscriber('/enc', EncMsg, self.process_encoder_msg)
 
