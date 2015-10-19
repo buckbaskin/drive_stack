@@ -30,10 +30,11 @@ Copyright 2015 William Baskin
 import rospy
 import math
 from nav_msgs.msg import Odometry
-from geometry_msgs.msg import Point, Vector3
+from geometry_msgs.msg import Point, Vector3, Quaternion
 from drive_stack.srv import Goal, GoalResponse
 
 from rostype import returns
+from tf import transformations as tft
 
 def heading_to_quaternion(heading):
     """
@@ -159,6 +160,10 @@ class Leader(object):
         self.targets = []
         self.targets.append(start)
 
+        # pylint: disable=invalid-name
+        # dt, dx, dy properly express what I'm trying to get across
+        # i.e. differential time, x, y
+
         dt = .1
         des_speed = .5 # m/s
         dx = end.x - start.x
@@ -174,7 +179,7 @@ class Leader(object):
         for i in range(1, steps):
             odo = Odometry()
             odo.pose.pose.point = Point(x=start.x+i*dx, y=start.y+i*dy)
-            odo.pose.pose.orientation = heading_to_quat(heading)
+            odo.pose.pose.orientation = heading_to_quaternion(heading)
             odo.twist.twist.linear = Vector3(x=des_speed)
             odo.twist.twist.angular = Vector3()
             self.targets.append(odo)
@@ -195,6 +200,10 @@ class Leader(object):
         self.targets = []
         self.targets.append(start)
 
+        # pylint: disable=invalid-name
+        # dt, dx, dy properly express what I'm trying to get across
+        # i.e. differential time, x, y
+
         dt = .1
         des_speed = .5 # m/s
         dx = end.x - start.x
@@ -210,7 +219,7 @@ class Leader(object):
         for i in range(1, steps):
             odo = Odometry()
             odo.pose.pose.point = Point(x=start.x+i*dx, y=start.y+i*dy)
-            odo.pose.pose.orientation = heading_to_quat(heading)
+            odo.pose.pose.orientation = heading_to_quaternion(heading)
             odo.twist.twist.linear = Vector3(x=des_speed)
             odo.twist.twist.angular = Vector3()
             self.targets.append(odo)
@@ -229,11 +238,13 @@ class Leader(object):
     def run_server(self):
         self.wait_for_services()
         self.init_server()
-        rt = rospy.rate(10)
+        rate = rospy.Rate(10)
         while not rospy.is_shutdown():
             self.publish_path_interface()
-            rt.sleep()
+            rate.sleep()
 
 if __name__ == '__main__':
-    l = Leader()
-    l.run_server()
+    # pylint: disable=invalid-name
+    # leader is a fine name, it's not a constant
+    leader = Leader()
+    leader.run_server()
