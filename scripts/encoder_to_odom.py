@@ -178,3 +178,7 @@ class WheelOdometryGenerator(object):
         self.heading += dtheta
         self.v = end_v
         self.omega = end_omega
+
+if __name__ == '__main__':
+    wog = WheelOdometryGenerator()
+    wog.start_node()
