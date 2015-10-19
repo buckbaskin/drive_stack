@@ -1,6 +1,12 @@
 import rospy
+import math
 from nav_msgs.msg import Odometry
+from geometry_msgs.msg import Quaternion
 from snowmower_msgs.msg import EncMsg
+
+def heading_to_quaternion(heading):
+    q = Quaternion()
+    return q
 
 class WheelOdometryGenerator(object):
     def __init__(self):
@@ -23,7 +29,10 @@ class WheelOdometryGenerator(object):
             self.last_enc = msg
         dleft = msg.left - self.last_enc.left
         dright = msg.right - self.last_enc.right
-        dt = .1 # TODO(buckbaskin): fix timing
+        # time is in secs
+        dt = (msg.header.stamp.secs - self.last_enc.header.stamp.secs)*1.0
+        if dt < 0:
+            dt = 0.0
 
         if dleft == dright:
             v = self.distance(dleft) / dt
@@ -32,7 +41,6 @@ class WheelOdometryGenerator(object):
             arc_left = self.distance(dleft)
             arc_right = self.distance(dright)
 
-            #TODO(buckbaskin): calc the arc radius to relate v, omega
             if arc_left < arc_right:
                 r = (self.track_width/2)*((arc_right+arc_left)/(arc_right-arc_left))
                 theta = arc_left/(r-(self.track_width/2))
@@ -43,7 +51,7 @@ class WheelOdometryGenerator(object):
             omega = theta/dt
 
         # based on v, omega, update state
-        self.update_state(v, omega)
+        self.update_state(v, omega, dt)
 
         self.send_current_odom()
         self.last_enc = msg
@@ -51,7 +59,7 @@ class WheelOdometryGenerator(object):
     def send_current_odom(self):
         o = Odometry()
         o.header.seq = self.seq
-        o.header.stamp = rospy.time.now()
+        o.header.stamp = rospy.Time.now()
         o.header.frame_id = '/odom'
 
         o.pose.pose.position.x = self.x
@@ -75,6 +83,23 @@ class WheelOdometryGenerator(object):
     def distance(self, ticks):
         return ticks*1.0/self.encoders_per_rev*math.PI*self.wheel_diam
 
-    def update_state(self, v, omega):
-        # TODO(buckbaskin): do the state update thing
-        pass
+    def update_state(self, avg_v, avg_omega, dt):
+        # input is observed average velocity (distance / time), angular velocity
+        # calculates the linear value from start v (current state) to end v (new
+        # state) based on this average.
+
+        dr = avg_v*dt
+        dtheta = avg_omega*dt
+
+        average_heading = self.heading + avg_omega/2.0
+
+        dy = dr * math.sin(average_heading)
+        dx = dr * math.cos(average_heading)
+        end_v = avg_v + (avg_v - self.v)
+        end_omega = avg_omega + (avg_omega - self.omega)
+
+        self.x += dx
+        self.y += dy
+        self.heading += dtheta
+        self.v = end_v
+        self.omega = end_omega
