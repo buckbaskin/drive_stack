@@ -6,13 +6,13 @@ Copyright 2015 William Baskin
 /*****************************************
  LICENSE SUMMARY
 
- This package is licensed under the 
+ This package is licensed under the
     MIT License. Please see the LICENSE.md
-    file in the root folder for the 
+    file in the root folder for the
     complete license.
 
  *****************************************/
- 
+
  Leader
 
  This class takes in high level goals, and then develops a path (a series
@@ -28,10 +28,28 @@ Copyright 2015 William Baskin
  '''
 
 import rospy
+import math
 from nav_msgs.msg import Odometry
-import drive_stack
+from geometry_msgs.msg import Point, Vector3
+from drive_stack.srv import Goal, GoalResponse
 
 from rostype import returns
+
+def heading_to_quaternion(heading):
+    """
+    Converts a Euler yaw/heading angle to equivalent quaternion
+    input: euler heading in radians
+    output: nav_msgs.msg.Quaternion
+    """
+
+    quat = tft.quaternion_from_euler(0, 0, heading)
+
+    quaternion = Quaternion()
+    quaternion.x = quat[0]
+    quaternion.y = quat[1]
+    quaternion.z = quat[2]
+    quaternion.w = quat[3]
+    return quaternion
 
 class Leader(object):
     def __init__(self):
@@ -40,10 +58,22 @@ class Leader(object):
         self.index = 0
         self.rolling_index = -1
 
+        self.path_goal = None
+        self.goal = None
+        self.path_start = None
+        self.start_pub = None
+        self.path_back = None
+        self.back = None
+        self.next = None
+        self.current = None
+        self.start = None
+        self.rolling = None
+        self.path_next = None
+
     # Pub/Sub/Service functionality
 
     def goal_callback(self):
-        return drive_stack.srv.GoalResponse(self.targets[self.index+1])
+        return GoalResponse(self.targets[self.index+1])
 
     def next_callback(self):
         if len(self.targets) > self.index+2:
@@ -57,7 +87,7 @@ class Leader(object):
 
 
     def start_callback(self):
-        return drive_stack.srv.GoalResponse(self.targets[self.index])
+        return GoalResponse(self.targets[self.index])
 
     def back_callback(self):
         self.index += -1
@@ -70,16 +100,10 @@ class Leader(object):
             self.generate_next_path(True) # do reverse next path
             return self.goal_callback()
 
-    def current(self):
-        return self.goal_callback()
-
-    def start(self):
-        return self.start_callback()
-
     def next_rolling_pub(self):
         self.rolling_index += 1
         self.rolling_index = self.rolling_index % len(self.targets)
-        return path[rolling_index]
+        return self.targets[self.rolling_index]
 
     # Server/running management
 
@@ -89,18 +113,21 @@ class Leader(object):
         #  multiple nodes waiting on each other will maintain blocking calls
         #  indefinitely.
 
+        # pylint: disable=line-too-long
+        # services are okay to define on one line that is too long
+
         # Services from Path that are critical to leader
-        #  self.goal = rospy.Service('/path/goal', drive_stack.srv.Goal, goal_callback)
-        #  self.next = rospy.Service('/path/next', drive_stack.srv.Goal, next_callback)
-        #  self.start = rospy.Service('/path/start', drive_stack.srv.Goal, start_callback)
-        #  self.back = rospy.Service('/path/back', drive_stack.srv.Goal, back_callback)
+        #  self.goal = rospy.Service('/path/goal', Goal, goal_callback)
+        #  self.next = rospy.Service('/path/next', Goal, next_callback)
+        #  self.start = rospy.Service('/path/start', Goal, start_callback)
+        #  self.back = rospy.Service('/path/back', Goal, back_callback)
         rospy.wait_for_service('/path/goal')
         rospy.wait_for_service('/path/next')
         rospy.wait_for_service('/path/start')
         rospy.wait_for_service('/path/back')
 
         # Assign callables for the Path services
-        # returns(Odometry)(func) is a decorator that I wrote that forces the 
+        # returns(Odometry)(func) is a decorator that I wrote that forces the
         #  rospy.ServiceProxy('channel') to return the proper type or throw
         #  an error.
         self.path_goal = returns(Odometry)(rospy.ServiceProxy('/path/goal'))
@@ -113,16 +140,18 @@ class Leader(object):
 
         self.generate_initial_path()
 
-        self.goal = rospy.Service('/lead/goal', drive_stack.srv.Goal, goal_callback)
-        self.next = rospy.Service('/lead/next', drive_stack.srv.Goal, next_callback)
-        self.start = rospy.Service('/lead/start', drive_stack.srv.Goal, start_callback)
-        self.back = rospy.Service('/lead/back', drive_stack.srv.Goal, back_callback)
+        # pylint: disable=line-too-long
+        # services are okay to define on one line that is too long
+
+        self.goal = rospy.Service('/lead/goal', Goal, self.goal_callback)
+        self.next = rospy.Service('/lead/next', Goal, self.next_callback)
+        self.start = rospy.Service('/lead/start', Goal, self.start_callback)
+        self.back = rospy.Service('/lead/back', Goal, self.back_callback)
         self.current = rospy.Publisher('/lead/current', Odometry, queue_size=1)
         self.start_pub = rospy.Publisher('/lead/start_goal', Odometry, queue_size=1)
         self.rolling = rospy.Publisher('/lead/rolling', Odometry, queue_size=1)
 
     def generate_initial_path(self):
-        # TODO(buckbaskin): change to getting path from Path, generating intermediate points
         # Note: this is called once during node initialization
         end = self.path_goal() # Odometry
         start = self.path_start() # Odometry
@@ -144,24 +173,23 @@ class Leader(object):
 
         for i in range(1, steps):
             odo = Odometry()
-            odo.pose.pose.point = Point(x = start.x+i*dx, y = start.y+i*dy)
+            odo.pose.pose.point = Point(x=start.x+i*dx, y=start.y+i*dy)
             odo.pose.pose.orientation = heading_to_quat(heading)
-            odo.twist.twist.linear = Vector3(x = des_speed)
+            odo.twist.twist.linear = Vector3(x=des_speed)
             odo.twist.twist.angular = Vector3()
             self.targets.append(odo)
 
         self.index = 0
 
     def generate_next_path(self, rvs):
-        # TODO(buckbaskin): change to getting path from Path, generating intermediate points
         # if rvs: move to the previous segement on the path, starting at the end
         # else: generate a path to the next Path goal
         if not rvs:
-            end = self.targets_next()
-            start = self.targets_start()
+            end = self.path_next()
+            start = self.path_start()
         else:
             # move back one segment
-            start = self.targets_back()
+            start = self.path_back()
             end = start.path_goal()
 
         self.targets = []
@@ -181,9 +209,9 @@ class Leader(object):
 
         for i in range(1, steps):
             odo = Odometry()
-            odo.pose.pose.point = Point(x = start.x+i*dx, y = start.y+i*dy)
+            odo.pose.pose.point = Point(x=start.x+i*dx, y=start.y+i*dy)
             odo.pose.pose.orientation = heading_to_quat(heading)
-            odo.twist.twist.linear = Vector3(x = des_speed)
+            odo.twist.twist.linear = Vector3(x=des_speed)
             odo.twist.twist.angular = Vector3()
             self.targets.append(odo)
 
@@ -193,9 +221,9 @@ class Leader(object):
             self.index = 0
 
     def publish_path_interface(self):
-        if len(self.targets)
-            self.current.publish(self.current())
-            self.start_pub.publish(self.start())
+        if len(self.targets):
+            self.current.publish(self.goal_callback())
+            self.start_pub.publish(self.start_callback())
             self.rolling.publish(self.next_rolling_pub())
 
     def run_server(self):
