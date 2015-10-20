@@ -55,6 +55,44 @@ def heading_to_quaternion(heading):
     quaternion.w = quat[3]
     return quaternion
 
+def dot_product(a, b):
+    """
+    calcuates the dot product of two tuples/vectors a, b
+    input: 2 three-tuples a, b
+    output: double: dot product 
+    """
+    return a[0]*b[0]+a[1]*b[1]+a[2]*b[2]
+
+def cross_product(a, b):
+    """
+    calcuates the cross product of two tuples/vectors a, b
+    input: 2 three-tuples a, b
+    output: three-tuple (cross product of a, b)
+
+     i    j    k
+    a[0] a[1] a[2]
+    b[0] b[1] b[2]
+    """
+    i = a[1]*b[2]-a[2]*b[1]
+    j = a[0]*b[2]-a[2]*b[0]
+    k = a[0]*b[1]-a[1]*b[0]
+    return (i, j, k,)
+
+def scale(vector, magnitude):
+    """
+    scales the given vector by the magnitude (scalar multiplication)
+    input: three-tuple vector, double magnitude
+    output: three-tuple scaled vector
+    """
+    return (vector[0]*magnitude, vector[1]*magnitude, vector[2]*magnitude)
+
+def unit(vector):
+    """
+    returns the unit vector in the same direction as the given vector
+    """
+    length = sqrt(vector[0]*vector[0]+vector[1]*vector[1]+vector[2]*vector[2])
+    return scale(vector, 1.0/length)
+
 class Driver(object):
     """
     See above
@@ -160,16 +198,68 @@ class Driver(object):
             self.heading_error(location, goal),)
 
     def along_axis_error(self, location, goal):
-        # TODO(buckbaskin):
-        return 0
+        relative_position_x = (location.pose.pose.position.x - 
+            goal.pose.pose.position.x)
+        relative_position_y = (location.pose.pose.position.y - 
+            goal.pose.pose.position.y)
+        relative_position_z = (location.pose.pose.position.z - 
+            goal.pose.pose.position.z)
+
+        # relative position of the best estimate position and the goal
+        # vector points from the goal to the location
+        relative_position = (relative_position_x, relative_position_y, 
+            relative_position_z)
+
+        goal_heading = quaternion_to_heading(goal.pose.pose.position)
+        goal_vector_x = math.cos(goal_heading)
+        goal_vector_y = math.sin(goal_heading)
+        goal_vector_z = 0.0
+
+        # vector in the direction of the goal heading, axis of desired motion
+        goal_vector = (goal_vector_x, goal_vector_y, goal_vector_z)
+
+        return dot_product(relative_position, goal_vector)
 
     def off_axis_error(self, location, goal):
-        # TODO(buckbaskin):
-        return 0
+        relative_position_x = (location.pose.pose.position.x - 
+            goal.pose.pose.position.x)
+        relative_position_y = (location.pose.pose.position.y - 
+            goal.pose.pose.position.y)
+        relative_position_z = (location.pose.pose.position.z - 
+            goal.pose.pose.position.z)
+
+        # relative position of the best estimate position and the goal
+        # vector points from the goal to the location
+        relative_position = (relative_position_x, relative_position_y, 
+            relative_position_z)
+
+        goal_heading = quaternion_to_heading(goal.pose.pose.position)
+        goal_vector_x = math.cos(goal_heading)
+        goal_vector_y = math.sin(goal_heading)
+        goal_vector_z = 0.0
+
+        # vector in the direction of the goal heading, axis of desired motion
+        goal_vector = (goal_vector_x, goal_vector_y, goal_vector_z)
+
+        relative_along_goal = scale(unit(relative_position),
+            dot_product(relative_position, goal_vector))
+
+        relative_normal_x = relative_position[0]-relative_along_goal[0]
+        relative_normal_y = relative_position[1]-relative_along_goal[1]
+        relative_normal_z = relative_position[2]-relative_along_goal[2]
+
+        return sqrt(relative_normal_x*relative_normal_x+
+            relative_normal_y*relative_normal_y+
+            relative_normal_z*relative_normal_z)
+
 
     def heading_error(self, location, goal):
-        # TODO(buckbaskin):
-        return 0
+        """
+        return difference in heading between location and goal
+        """
+        loc_head =quaternion_to_heading(location.pose.pose.quaternion)
+        goal_head =quaternion_to_heading(goal.pose.pose.quaternion)
+        return loc_head - goal_head
 
     def run_node(self):
         self.wait_for_services()
