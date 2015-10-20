@@ -1,6 +1,12 @@
 <launch>
 	<node
 		pkg="drive_stack"
+		type="encoder_to_odom.py"
+		name="wheel_odometry"
+		respawn="true"
+	></node>
+	<node
+		pkg="drive_stack"
 		type="path.py"
 		name="default_path"
 		respawn="true"
