@@ -147,6 +147,9 @@ class Driver(object):
         self.lead_back = rospy.ServiceProxy('/lead/back')
 
     def init_node(self):
+        """
+        Start the pub/sub portion of the ROS node
+        """
         rospy.init_node('default_path')
         self.position = rospy.Subscriber('/odom', Odometry, self.process_odom)
         self.cmd_vel = rospy.Publisher('/cmd_vel', Twist, queue_size=1)
@@ -208,6 +211,19 @@ class Driver(object):
         self.cmd_vel.publish(twist_out)
 
     def calc_errors(self, location, goal):
+        """
+        calculate errors in "x", "y", "theta" between a location and a goal
+
+        input: two nav_msgs.msg.Odometry, a current best estimate of location
+         and the goal
+        output: a three-tuple representing error along the goal heading vector,
+         error normal to that vector, and heading error
+
+        example usage:
+        odom = Odometry(current location)
+        goal = Odometry(target location)
+        along_axis, off_axis, heading = self.calc_errors(odom, goal)
+        """
         along = self.along_axis_error(location, goal)
         off = self.off_axis_error(location, goal)
         heading = self.heading_error(location, goal)
@@ -216,29 +232,57 @@ class Driver(object):
     # pylint: disable=no-self-use
     # these are clearly used. See ^ calc_errors above
     def along_axis_error(self, location, goal):
+        """
+        calc error along the axis defined by the goal position and direction
+
+        input: two nav_msgs.msg.Odometry, current best location estimate + goal
+        output: double distance along the axis
+
+        axis is defined by a vector from the unit circle aligned with the goal
+         heading
+        relative position is the vector from the goal x, y to the location x, y
+
+        distance is defined by the dot product
+
+        example use:
+        see calc_errors above
+        """
         relative_position_x = (location.pose.pose.position.x -
             goal.pose.pose.position.x)
         relative_position_y = (location.pose.pose.position.y -
             goal.pose.pose.position.y)
-        relative_position_z = (location.pose.pose.position.z -
-            goal.pose.pose.position.z)
 
         # relative position of the best estimate position and the goal
         # vector points from the goal to the location
-        relative_position = (relative_position_x, relative_position_y,
-            relative_position_z)
+        relative_position = (relative_position_x, relative_position_y, 0.0)
 
         goal_heading = quaternion_to_heading(goal.pose.pose.position)
         goal_vector_x = math.cos(goal_heading)
         goal_vector_y = math.sin(goal_heading)
-        goal_vector_z = 0.0
 
         # vector in the direction of the goal heading, axis of desired motion
-        goal_vector = (goal_vector_x, goal_vector_y, goal_vector_z)
+        goal_vector = (goal_vector_x, goal_vector_y, 0.0)
 
         return dot_product(relative_position, goal_vector)
 
     def off_axis_error(self, location, goal):
+        """
+        calc error normal to axis defined by the goal position and direction
+
+        input: two nav_msgs.msg.Odometry, current best location estimate and
+         goal
+        output: double distance along the axis
+
+        axis is defined by a vector from the unit circle aligned with the goal
+         heading
+        relative position is the vector from the goal x, y to the location x, y
+
+        distance is defined by subtracting the parallel vector from the total
+         relative position vector
+
+        example use:
+        see calc_errors above
+        """
         relative_position_x = (location.pose.pose.position.x -
             goal.pose.pose.position.x)
         relative_position_y = (location.pose.pose.position.y -
@@ -289,6 +333,9 @@ class Driver(object):
         return math.sqrt(x*x+y*y)
 
     def run_node(self):
+        """
+        Runs the ROS node (initialization, cyclical pub/sub)
+        """
         self.wait_for_services()
         self.init_node()
 
