@@ -53,7 +53,14 @@ def heading_to_quaternion(heading):
     return quaternion
 
 class Leader(object):
+    """
+    See above
+    """
+    # pylint: disable=too-many-instance-attributes
+    # there are only 4 non-pub/sub related attributes
+
     def __init__(self):
+
         self.targets = []
         self.frame = 'map'
         self.index = 0
@@ -74,9 +81,15 @@ class Leader(object):
     # Pub/Sub/Service functionality
 
     def goal_callback(self):
+        """
+        return the current goal. callback for service
+        """
         return GoalResponse(self.targets[self.index+1])
 
     def next_callback(self):
+        """
+        return the current goal after advancing. callback for service
+        """
         if len(self.targets) > self.index+2:
             self.index += 1
             if self.index < 0:
@@ -88,9 +101,15 @@ class Leader(object):
 
 
     def start_callback(self):
+        """
+        return the current starting point. callback for service
+        """
         return GoalResponse(self.targets[self.index])
 
     def back_callback(self):
+        """
+        return the starting point after dropping back one. callback for service
+        """
         self.index += -1
         if len(self.targets) <= self.index+1:
             self.index = len(self.targets) - 2
@@ -102,6 +121,9 @@ class Leader(object):
             return self.goal_callback()
 
     def next_rolling_pub(self):
+        """
+        return the rolling publisher for Rviz
+        """
         self.rolling_index += 1
         self.rolling_index = self.rolling_index % len(self.targets)
         return self.targets[self.rolling_index]
@@ -109,6 +131,7 @@ class Leader(object):
     # Server/running management
 
     def wait_for_services(self):
+        """
         # OVERRIDE this method to have the node wait for a service or services
         #  before offering its own and beginning publishing. Be careful, because
         #  multiple nodes waiting on each other will maintain blocking calls
@@ -122,6 +145,7 @@ class Leader(object):
         #  self.next = rospy.Service('/path/next', Goal, next_callback)
         #  self.start = rospy.Service('/path/start', Goal, start_callback)
         #  self.back = rospy.Service('/path/back', Goal, back_callback)
+        """
         rospy.wait_for_service('/path/goal')
         rospy.wait_for_service('/path/next')
         rospy.wait_for_service('/path/start')
@@ -137,6 +161,9 @@ class Leader(object):
         self.path_back = returns(Odometry)(rospy.ServiceProxy('/path/back'))
 
     def init_server(self):
+        """
+        Run the ROS node
+        """
         rospy.init_node('default_path')
 
         self.generate_initial_path()
@@ -153,6 +180,9 @@ class Leader(object):
         self.rolling = rospy.Publisher('/lead/rolling', Odometry, queue_size=1)
 
     def generate_initial_path(self):
+        """
+        Path creation for node
+        """
         # Note: this is called once during node initialization
         end = self.path_goal() # Odometry
         start = self.path_start() # Odometry
@@ -187,6 +217,9 @@ class Leader(object):
         self.index = 0
 
     def generate_next_path(self, rvs):
+        """
+        generate a new path, either forwards or backwards (rvs == True)
+        """
         # if rvs: move to the previous segement on the path, starting at the end
         # else: generate a path to the next Path goal
         if not rvs:
@@ -229,18 +262,24 @@ class Leader(object):
         else:
             self.index = 0
 
-    def publish_path_interface(self):
+    def publish_leader_interface(self):
+        """
+        publish on all of the path interface topics
+        """
         if len(self.targets):
             self.current.publish(self.goal_callback())
             self.start_pub.publish(self.start_callback())
             self.rolling.publish(self.next_rolling_pub())
 
     def run_server(self):
+        """
+        Run the node
+        """
         self.wait_for_services()
         self.init_server()
         rate = rospy.Rate(10)
         while not rospy.is_shutdown():
-            self.publish_path_interface()
+            self.publish_leader_interface()
             rate.sleep()
 
 if __name__ == '__main__':
