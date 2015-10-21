@@ -180,5 +180,7 @@ class WheelOdometryGenerator(object):
         self.omega = end_omega
 
 if __name__ == '__main__':
+    # pylint: disable=invalid-name
+    # wog is a placeholder to just run the node
     wog = WheelOdometryGenerator()
     wog.start_node()
