@@ -1,3 +1,10 @@
+"""
+Example Driver
+Example implementation of the driver
+
+process_odom is the key method here
+"""
+
 import driver
 # from driver import heading_to_quaternion, quaternion_to_heading
 # from driver import dot_product, cross_product, scale, unit
@@ -5,6 +12,9 @@ import driver
 from geometry_msgs.msg import Twist
 
 class ExampleDriver(driver.Driver):
+    """
+    See module docstring
+    """
     smoothness = 10
     k = 1.0/smoothness
     a = 3*k
@@ -92,6 +102,9 @@ class ExampleDriver(driver.Driver):
         self.cmd_vel.publish(twist_out)
 
     def calc_old_radius(self, linear_vel, angular_vel):
+        """
+        Calculate an instant radius from a linear velocity and angular velocity
+        """
         if angular_vel < .001:
             last_radius = float("inf")
         else:
@@ -99,6 +112,9 @@ class ExampleDriver(driver.Driver):
         return last_radius
 
     def kurvature_from_radius(self, radius):
+        """
+        Calculate the instant kurvature from an instant radius
+        """
         if radius < .001:
             kurvature = 1000 # upper bound on kurvature
         else:
@@ -106,6 +122,9 @@ class ExampleDriver(driver.Driver):
         return kurvature
 
     def radius_from_kurvature(self, k):
+        """
+        Calculate the instant radius from the kurvature
+        """
         if k < .001:
             new_radius = float("inf")
         else:
@@ -113,6 +132,9 @@ class ExampleDriver(driver.Driver):
         return new_radius
 
     def check_linear_limits(self, odom, linear_vel):
+        """
+        Make sure the given linear velocity fits within accel/speed limits
+        """
         # limit maximum acceleration
         if odom.twist.twist.linear.x + self.max_accel < linear_vel:
             linear_vel = odom.twist.twist.linear.x + self.max_accel
@@ -128,6 +150,9 @@ class ExampleDriver(driver.Driver):
         return linear_vel
 
     def check_angular_limits(self, odom, angular_vel):
+        """
+        Make sure the given angular velocity fits within accel/speed limits
+        """
         # limit maximum angular acceleration
         if odom.twist.twist.angular.z + self.max_alpha < angular_vel:
             angular_vel = odom.twist.twist.angular.z + self.max_alpha
