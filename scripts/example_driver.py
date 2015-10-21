@@ -120,3 +120,9 @@ class ExampleDriver(driver.Driver):
         twist_out.linear.x = linear_vel
         twist_out.angular.z = angular_vel
         self.cmd_vel.publish(twist_out)
+
+if __name__ == '__main__':
+    # pylint: disable=invalid-name
+    # ignoring the trivial naming of the ExampleDriver class for startup and run
+    d = ExampleDriver()
+    d.run_node()
