@@ -8,6 +8,7 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   rospy
   std_msgs
+  std_srvs
   geometry_msgs
   nav_msgs
   message_generation
@@ -54,11 +55,10 @@ find_package(catkin REQUIRED COMPONENTS
  )
 
 ## Generate services in the 'srv' folder
-# add_service_files(
-#   FILES
-#   Service1.srv
-#   Service2.srv
-# )
+add_service_files(
+   FILES
+  Goal.srv
+)
 
 ## Generate actions in the 'action' folder
 # add_action_files(
@@ -71,6 +71,7 @@ find_package(catkin REQUIRED COMPONENTS
  generate_messages(
    DEPENDENCIES
    std_msgs
+   std_srvs
    geometry_msgs
    nav_msgs
  )
@@ -87,7 +88,7 @@ find_package(catkin REQUIRED COMPONENTS
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES drive_stack
-  CATKIN_DEPENDS roscpp rospy std_msgs geometry_msgs nav_msgs message_runtime snowmower_msgs
+  CATKIN_DEPENDS roscpp rospy std_msgs std_srvs geometry_msgs nav_msgs message_runtime snowmower_msgs
 #  DEPENDS system_lib
 
 )
@@ -116,19 +117,19 @@ include_directories(
 # add_dependencies(baskin_steering baskin_steering_generate_messages_cpp)
 
 ## Specify libraries to link a library or executable target against
-target_link_libraries(
+# target_link_libraries(
 #   baskin_controller 
-   ${catkin_LIBRARIES}
-)
-target_link_libraries(
+#    ${catkin_LIBRARIES}
+# )
+# target_link_libraries(
 #   baskin_steering
-   ${catkin_LIBRARIES}
-)
+#   ${catkin_LIBRARIES}
+# )
 
-target_link_libraries(
+# target_link_libraries(
 #   baskin_localization
-   ${catkin_LIBRARIES}
-)
+#   ${catkin_LIBRARIES}
+# )
 
 
 #############

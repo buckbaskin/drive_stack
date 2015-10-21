@@ -20,3 +20,6 @@ Creates and updates the lower level list of interim position sub-goals for the r
 ### Driver
 
 Outputs a velocity command based on a current position and the desired next position from a Leader to try and match the two.
+
+For everything to run properly, run the following:
+catkin_make --only-pkg-with-deps drive_stack
