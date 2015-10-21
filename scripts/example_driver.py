@@ -1,18 +1,23 @@
 import driver
-from driver import heading_to_quaternion, quaternion_to_heading
-from driver import dot_product, cross_product, scale, unit
+# from driver import heading_to_quaternion, quaternion_to_heading
+# from driver import dot_product, cross_product, scale, unit
+# import rospy
+from geometry_msgs.msg import Twist
 
 class ExampleDriver(driver.Driver):
     smoothness = 10
     k = 1.0/smoothness
     a = 3*k
-    b = 3*pow(k,2)
-    c = pow(k,3)
+    b = 3*pow(k, 2)
+    c = pow(k, 3)
 
     max_v = 1.0
     max_accel = .05
     max_omega = 0.5
     max_alpha = .05
+
+    # pylint: disable=no-self-use
+    # incorrectly identifies helpers as no-self-use
 
     def __init__(self):
         super(ExampleDriver, self).__init__()
@@ -55,31 +60,59 @@ class ExampleDriver(driver.Driver):
         # choose k based on smoothness = 1/k
 
         # implement the math
-        if odom.twist.twist.angular.z < .001:
-            last_radius = float("inf")
-        else:
-            last_radius = (abs(odom.twist.twist.linear.x) / 
-                abs(odom.twist.twist.angular.z))
-        
-        if last_radius < .001:
-            kurvature = 1000 # upper bound on kurvature
-        else:
-            kurvature = 1.0 / last_radius
+        last_radius = self.calc_old_radius(odom.twist.twist.linear.x,
+            odom.linear.twist.twist.angular.z)
 
-        dt = odom.header.time.secs - self.last_odom.header.time.secs
-        deltaKurv_dt = -1.0*self.a*kurvature - self.b*heading - self.c*off
-        delta_kurv_discrete = deltaKurv_dt*dt
+        kurvature = self.kurvature_from_radius(last_radius)
+
+        dtime = odom.header.time.secs - self.last_odom.header.time.secs
+        delta_kurv_discrete = (-1.0*self.a*kurvature -
+            self.b*heading - self.c*off)*dtime
 
         new_kurvature = kurvature+delta_kurv_discrete
-        if new_kurvature < .001:
-            new_radius = float("inf")
-        else:
-            new_radius = 1.0/new_kurvature
+        new_radius = self.radius_from_kurvature(new_kurvature)
 
         # match speed to goal, with adjustment for position error
-        linear_vel = goal.twist.twist.linear.x
+        linear_vel = next_goal.twist.twist.linear.x
         linear_vel += -0.5*along
 
+        linear_vel = self.check_linear_limits(odom, linear_vel)
+
+        # calculate angular velocity
+        angular_vel = linear_vel / new_radius
+
+        angular_vel = self.check_angular_limits(odom, angular_vel)
+        # reset linear_vel based on new (lower, limited) angular vel
+        linear_vel = angular_vel * new_radius
+
+        # linear and angular velocity are now within dx/dt, d2x/dt2 limits
+        twist_out = Twist()
+        twist_out.linear.x = linear_vel
+        twist_out.angular.z = angular_vel
+        self.cmd_vel.publish(twist_out)
+
+    def calc_old_radius(self, linear_vel, angular_vel):
+        if angular_vel < .001:
+            last_radius = float("inf")
+        else:
+            last_radius = abs(linear_vel) / abs(angular_vel)
+        return last_radius
+
+    def kurvature_from_radius(self, radius):
+        if radius < .001:
+            kurvature = 1000 # upper bound on kurvature
+        else:
+            kurvature = 1.0 / radius
+        return kurvature
+
+    def radius_from_kurvature(self, k):
+        if k < .001:
+            new_radius = float("inf")
+        else:
+            new_radius = 1.0/k
+        return new_radius
+
+    def check_linear_limits(self, odom, linear_vel):
         # limit maximum acceleration
         if odom.twist.twist.linear.x + self.max_accel < linear_vel:
             linear_vel = odom.twist.twist.linear.x + self.max_accel
@@ -87,39 +120,25 @@ class ExampleDriver(driver.Driver):
             linear_vel = odom.twist.twist.linear.x - self.max_accel
 
         # limit maximum speed
-        if linear_vel > max_v:
-            linear_vel = max_v
-        elif linear_vel < -1.0*max_v:
-            linear_vel = -1.0*max_v
+        if linear_vel > self.max_v:
+            linear_vel = self.max_v
+        elif linear_vel < -1.0*self.max_v:
+            linear_vel = -1.0*self.max_v
 
-        # calculate angular velocity
-        angular_vel = linear_vel / new_radius
+        return linear_vel
 
-         # limit maximum angular acceleration
+    def check_angular_limits(self, odom, angular_vel):
+        # limit maximum angular acceleration
         if odom.twist.twist.angular.z + self.max_alpha < angular_vel:
             angular_vel = odom.twist.twist.angular.z + self.max_alpha
-            # reset linear_vel based on new (lower, limited) angular vel
-            linear_vel = angular_vel * new_radius
         elif angular_vel < odom.twist.twist.angular.z - self.max_alpha:
             angular_vel = odom.twist.twist.angular.z - self.max_alpha
-            # reset linear_vel based on new (lower, limited) angular vel
-            linear_vel = angular_vel * new_radius
 
         # limit maximum angular speed
-        if angular_vel > max_omega:
-            angular_vel = max_omega
-            # reset linear_vel based on new (lower, limited) angular vel
-            linear_vel = angular_vel * new_radius
-        elif angular_vel < -1.0*max_omega:
-            angular_vel = -1.0*max_omega
-            # reset linear_vel based on new (lower, limited) angular vel
-            linear_vel = angular_vel * new_radius
-
-        # linear and angular velocity are now within dx/dt, d2x/dt2 limits
-        twist_out = Twist()
-        twist_out.linear.x = linear_vel
-        twist_out.angular.z = angular_vel
-        self.cmd_vel.publish(twist_out)
+        if angular_vel > self.max_omega:
+            angular_vel = self.max_omega
+        elif angular_vel < -1.0*self.max_omega:
+            angular_vel = -1.0*self.max_omega
 
 if __name__ == '__main__':
     # pylint: disable=invalid-name
