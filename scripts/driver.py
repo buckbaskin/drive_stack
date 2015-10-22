@@ -151,7 +151,7 @@ class Driver(object):
         """
         Start the pub/sub portion of the ROS node
         """
-        rospy.init_node('default_path')
+        rospy.init_node('default_driver')
         self.position = rospy.Subscriber('/odom', Odometry, self.process_odom)
         self.cmd_vel = rospy.Publisher('/cmd_vel', Twist, queue_size=1)
 
