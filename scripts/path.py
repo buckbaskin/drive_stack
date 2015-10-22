@@ -52,9 +52,22 @@ class Path(object):
 
         self.path = []
         self.frame = 'map'
-        self.path.append(Odometry(x=0, y=1))
-        self.path.append(Odometry(x=0, y=2))
-        self.path.append(Odometry(x=0, y=3))
+        odom0 = Odometry()
+        odom0.pose.pose.position.x = 0
+        odom0.pose.pose.position.y = 0
+        self.path.append(odom0)
+        odom1 = Odometry()
+        odom1.pose.pose.position.x = 0
+        odom1.pose.pose.position.y = 1
+        self.path.append(odom1)
+        odom2 = Odometry()
+        odom2.pose.pose.position.x = 0
+        odom2.pose.pose.position.y = 2
+        self.path.append(odom2)
+        odom3 = Odometry()
+        odom3.pose.pose.position.x = 0
+        odom3.pose.pose.position.y = 3
+        self.path.append(odom3)
         self.index = 0
 
         self.rolling_index = -1
@@ -139,8 +152,8 @@ class Path(object):
         """
         publish all path-interface related publishing requirements
         """
-        self.current.publish(self.current())
-        self.start_pub.publish(self.start_callback())
+        self.current.publish(self.goal_callback().goal)
+        self.start_pub.publish(self.start_callback().goal)
         self.rolling.publish(self.next_rolling_pub())
 
     def run_server(self):
