@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 """
 ENCODER TO ODOM
 
@@ -130,8 +132,14 @@ class WheelOdometryGenerator(object):
         """
         start_node: Run the ROS node by intializing the publisher and subscriber
         """
+        rospy.init_node('encoder2odom')
         self.pub = rospy.Publisher('/odom', Odometry, queue_size=1)
         self.sub = rospy.Subscriber('/enc', EncMsg, self.process_encoder_msg)
+        rospy.loginfo('enc2odom: wheel odometry ready')
+        rate = rospy.Rate(10)
+        while not rospy.is_shutdown():
+            self.send_current_odom()
+            rate.sleep()
 
     # GEOMETRY
 
