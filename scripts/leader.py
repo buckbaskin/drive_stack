@@ -80,13 +80,14 @@ class Leader(object):
 
     # Pub/Sub/Service functionality
 
-    def goal_callback(self):
+    def goal_callback(self, req=None):
         """
         return the current goal. callback for service
         """
+        rospy.loginfo(str(self.index) + ' vs. len: '+str(len(self.targets)))
         return GoalResponse(self.targets[self.index+1])
 
-    def next_callback(self):
+    def next_callback(self, req=None):
         """
         return the current goal after advancing. callback for service
         """
@@ -100,13 +101,13 @@ class Leader(object):
             return self.goal_callback()
 
 
-    def start_callback(self):
+    def start_callback(self, req=None):
         """
         return the current starting point. callback for service
         """
         return GoalResponse(self.targets[self.index])
 
-    def back_callback(self):
+    def back_callback(self, req=None):
         """
         return the starting point after dropping back one. callback for service
         """
@@ -140,31 +141,45 @@ class Leader(object):
         # pylint: disable=line-too-long
         # services are okay to define on one line that is too long
 
-        # Services from Path that are critical to leader
+        # Services from Path that are critical to a leader
         #  self.goal = rospy.Service('/path/goal', Goal, goal_callback)
         #  self.next = rospy.Service('/path/next', Goal, next_callback)
         #  self.start = rospy.Service('/path/start', Goal, start_callback)
         #  self.back = rospy.Service('/path/back', Goal, back_callback)
         """
+
+        rospy.loginfo('waiting for services')
+        
         rospy.wait_for_service('/path/goal')
+        
+        rospy.loginfo('/path/goal works')
+        
         rospy.wait_for_service('/path/next')
+        
+        rospy.loginfo('/path/next works')
+        
         rospy.wait_for_service('/path/start')
+        
+        rospy.loginfo('/path/start works')
+        
         rospy.wait_for_service('/path/back')
+        
+        rospy.loginfo('All services available (x4)')
 
         # Assign callables for the Path services
         # returns(Odometry)(func) is a decorator that I wrote that forces the
         #  rospy.ServiceProxy('channel') to return the proper type or throw
         #  an error.
-        self.path_goal = returns(Odometry)(rospy.ServiceProxy('/path/goal'))
-        self.path_next = returns(Odometry)(rospy.ServiceProxy('/path/next'))
-        self.path_start = returns(Odometry)(rospy.ServiceProxy('/path/start'))
-        self.path_back = returns(Odometry)(rospy.ServiceProxy('/path/back'))
+        self.path_goal = (rospy.ServiceProxy('/path/goal', Goal))
+        self.path_next = (rospy.ServiceProxy('/path/next', Goal))
+        self.path_start = (rospy.ServiceProxy('/path/start', Goal))
+        self.path_back = (rospy.ServiceProxy('/path/back', Goal))
 
     def init_server(self):
         """
         Run the ROS node
         """
-        rospy.init_node('default_path')
+        rospy.init_node('default_leader')
 
         self.generate_initial_path()
 
@@ -178,14 +193,15 @@ class Leader(object):
         self.current = rospy.Publisher('/lead/current', Odometry, queue_size=1)
         self.start_pub = rospy.Publisher('/lead/start_goal', Odometry, queue_size=1)
         self.rolling = rospy.Publisher('/lead/rolling', Odometry, queue_size=1)
+        rospy.loginfo('leader: server intialized')
 
     def generate_initial_path(self):
         """
         Path creation for node
         """
         # Note: this is called once during node initialization
-        end = self.path_goal() # Odometry
-        start = self.path_start() # Odometry
+        end = self.path_goal().goal # Odometry
+        start = self.path_start().goal # Odometry
 
         self.targets = []
         self.targets.append(start)
@@ -196,8 +212,8 @@ class Leader(object):
 
         dt = .1
         des_speed = .5 # m/s
-        dx = end.x - start.x
-        dy = end.y - start.y
+        dx = end.pose.pose.position.x - start.pose.pose.position.x
+        dy = end.pose.pose.position.y - start.pose.pose.position.y
 
         heading = math.atan2(dy, dx)
         dx = des_speed*math.cos(heading)*dt
@@ -206,7 +222,7 @@ class Leader(object):
         distance = math.sqrt(dx*dx+dy*dy)
         steps = math.floor(distance/des_speed)
 
-        for i in range(1, steps):
+        for i in range(1, int(steps)):
             odo = Odometry()
             odo.pose.pose.point = Point(x=start.x+i*dx, y=start.y+i*dy)
             odo.pose.pose.orientation = heading_to_quaternion(heading)
@@ -215,6 +231,7 @@ class Leader(object):
             self.targets.append(odo)
 
         self.index = 0
+        rospy.loginfo('leader: intial path created')
 
     def generate_next_path(self, rvs):
         """
@@ -261,14 +278,15 @@ class Leader(object):
             self.index = len(self.targets)-2
         else:
             self.index = 0
+        rospy.loginfo('leader: new path created')
 
     def publish_leader_interface(self):
         """
         publish on all of the path interface topics
         """
-        if len(self.targets):
-            self.current.publish(self.goal_callback())
-            self.start_pub.publish(self.start_callback())
+        if len(self.targets) > 2:
+            self.current.publish(self.goal_callback().goal)
+            self.start_pub.publish(self.start_callback().goal)
             self.rolling.publish(self.next_rolling_pub())
 
     def run_server(self):
@@ -277,6 +295,7 @@ class Leader(object):
         """
         self.wait_for_services()
         self.init_server()
+        rospy.loginfo('leader: server running')
         rate = rospy.Rate(10)
         while not rospy.is_shutdown():
             self.publish_leader_interface()

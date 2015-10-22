@@ -84,13 +84,13 @@ class Path(object):
 
     # Pub/Sub/Service functionality
 
-    def goal_callback(self):
+    def goal_callback(self, req=None):
         """
         return the current goal. callback for service
         """
         return GoalResponse(self.path[self.index+1])
 
-    def next_callback(self):
+    def next_callback(self, req=None):
         """
         return the current goal after stepping forward one. callback for service
         """
@@ -98,13 +98,13 @@ class Path(object):
             self.index += 1
         return self.goal_callback()
 
-    def start_callback(self):
+    def start_callback(self, req=None):
         """
         return the current start point. callback for service
         """
         return GoalResponse(self.path[self.index])
 
-    def back_callback(self):
+    def back_callback(self, req=None):
         """
         return the start point after stepping back one. callback for service
         """
@@ -152,7 +152,7 @@ class Path(object):
         """
         publish all path-interface related publishing requirements
         """
-        self.current.publish(self.goal_callback().goal)
+        self.current.publish(self.goal_callback("This").goal)
         self.start_pub.publish(self.start_callback().goal)
         self.rolling.publish(self.next_rolling_pub())
 
@@ -162,6 +162,7 @@ class Path(object):
         """
         self.wait_for_services()
         self.init_server()
+        rospy.loginfo('path: server running')
         rate = rospy.Rate(10)
         while not rospy.is_shutdown():
             self.publish_path_interface()
