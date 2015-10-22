@@ -29,6 +29,7 @@ import math
 from tf import transformations as tft
 from nav_msgs.msg import Odometry
 from geometry_msgs.msg import Twist, Quaternion
+from drive_stack.srv import Goal
 
 # tentatively removed, might need it to call services properly
 # from drive_stack.srv import Goal
@@ -128,7 +129,7 @@ class Driver(object):
         #  multiple nodes waiting on each other will maintain blocking calls
         #  indefinitely.
 
-        # Services from Leader that are critical to leader
+        # Services from Leader that are critical to a driver
         #  self.goal = rospy.Service('/lead/goal', Goal, goal_callback)
         #  self.next = rospy.Service('/lead/next', Goal, next_callback)
         #  self.start = rospy.Service('/lead/start', Goal, start_callback)
@@ -141,10 +142,10 @@ class Driver(object):
         rospy.wait_for_service('/lead/back')
 
         # Assign callables for the Path services
-        self.lead_goal = rospy.ServiceProxy('/lead/goal')
-        self.lead_next = rospy.ServiceProxy('/lead/next')
-        self.lead_start = rospy.ServiceProxy('/lead/start')
-        self.lead_back = rospy.ServiceProxy('/lead/back')
+        self.lead_goal = rospy.ServiceProxy('/lead/goal', Goal)
+        self.lead_next = rospy.ServiceProxy('/lead/next', Goal)
+        self.lead_start = rospy.ServiceProxy('/lead/start', Goal)
+        self.lead_back = rospy.ServiceProxy('/lead/back', Goal)
 
     def init_node(self):
         """
@@ -338,10 +339,9 @@ class Driver(object):
         """
         self.wait_for_services()
         self.init_node()
-
+        rospy.loginfo('driver: node ready')
         rt = rospy.Rate(10)
-        while not rospy.is_shutdown():
-            rt.sleep()
+        rospy.spin()
 
 if __name__ == '__main__':
     # pylint: disable=invalid-name
