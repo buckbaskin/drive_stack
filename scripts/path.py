@@ -55,18 +55,22 @@ class Path(object):
         odom0 = Odometry()
         odom0.pose.pose.position.x = 0
         odom0.pose.pose.position.y = 0
+        odom0.header.frame_id = 'odom'
         self.path.append(odom0)
         odom1 = Odometry()
-        odom1.pose.pose.position.x = 0
-        odom1.pose.pose.position.y = 1
+        odom1.pose.pose.position.x = 1
+        odom1.pose.pose.position.y = 0
+        odom1.header.frame_id = 'odom'
         self.path.append(odom1)
         odom2 = Odometry()
-        odom2.pose.pose.position.x = 0
-        odom2.pose.pose.position.y = 2
+        odom2.pose.pose.position.x = 2
+        odom2.pose.pose.position.y = 0
+        odom2.header.frame_id = 'odom'
         self.path.append(odom2)
         odom3 = Odometry()
-        odom3.pose.pose.position.x = 0
-        odom3.pose.pose.position.y = 3
+        odom3.pose.pose.position.x = 3
+        odom3.pose.pose.position.y = 0
+        odom3.header.frame_id = 'odom'
         self.path.append(odom3)
         self.index = 0
 
@@ -119,6 +123,8 @@ class Path(object):
         """
         self.rolling_index += 1
         self.rolling_index = self.rolling_index % len(self.path)
+        # rospy.loginfo('rlli i: '+str(self.path[self.rolling_index].pose.pose.position.x)+
+        #     ','+str(self.path[self.rolling_index].pose.pose.position.y))
         return self.path[self.rolling_index]
 
     # Server/running management
@@ -148,6 +154,10 @@ class Path(object):
         self.start_pub = rospy.Publisher('/path/start_goal', Odometry, queue_size=1)
         self.rolling = rospy.Publisher('/path/rolling', Odometry, queue_size=1)
 
+        # for i in range(0, len(self.path)):
+        #     rospy.loginfo('path: '+str(i)+' '+str(self.path[i].pose.pose.position.y))
+
+
     def publish_path_interface(self):
         """
         publish all path-interface related publishing requirements
@@ -163,7 +173,7 @@ class Path(object):
         self.wait_for_services()
         self.init_server()
         rospy.loginfo('path: server running')
-        rate = rospy.Rate(10)
+        rate = rospy.Rate(5)
         while not rospy.is_shutdown():
             self.publish_path_interface()
             rate.sleep()
