@@ -84,7 +84,6 @@ class Leader(object):
         """
         return the current goal. callback for service
         """
-        rospy.loginfo(str(self.index) + ' vs. len: '+str(len(self.targets)))
         return GoalResponse(self.targets[self.index+1])
 
     def next_callback(self, req=None):
@@ -180,9 +179,9 @@ class Leader(object):
         Run the ROS node
         """
         rospy.init_node('default_leader')
-
+        self.wait_for_services()
         self.generate_initial_path()
-
+        
         # pylint: disable=line-too-long
         # services are okay to define on one line that is too long
 
@@ -199,6 +198,7 @@ class Leader(object):
         """
         Path creation for node
         """
+        rospy.loginfo('generate_initial_path!!!')
         # Note: this is called once during node initialization
         end = self.path_goal().goal # Odometry
         start = self.path_start().goal # Odometry
@@ -221,7 +221,7 @@ class Leader(object):
 
         distance = math.sqrt(dx*dx+dy*dy)
         steps = math.floor(distance/des_speed)
-
+        
         for i in range(1, int(steps)):
             odo = Odometry()
             odo.pose.pose.point = Point(x=start.x+i*dx, y=start.y+i*dy)
@@ -231,7 +231,6 @@ class Leader(object):
             self.targets.append(odo)
 
         self.index = 0
-        rospy.loginfo('leader: intial path created')
 
     def generate_next_path(self, rvs):
         """
@@ -284,7 +283,7 @@ class Leader(object):
         """
         publish on all of the path interface topics
         """
-        if len(self.targets) > 2:
+        if len(self.targets) >= 2:
             self.current.publish(self.goal_callback().goal)
             self.start_pub.publish(self.start_callback().goal)
             self.rolling.publish(self.next_rolling_pub())
@@ -293,10 +292,9 @@ class Leader(object):
         """
         Run the node
         """
-        self.wait_for_services()
         self.init_server()
         rospy.loginfo('leader: server running')
-        rate = rospy.Rate(10)
+        rate = rospy.Rate(5)
         while not rospy.is_shutdown():
             self.publish_leader_interface()
             rate.sleep()

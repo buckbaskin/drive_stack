@@ -1,4 +1,15 @@
+#!/usr/bin/env python
+
+# import sys
+# print sys.path
+
 import leader
+import rospy
+import math
+from geometry_msgs.msg import Point, Vector3
+from nav_msgs.msg import Odometry
+
+from leader import heading_to_quaternion
 
 class ExampleLeader(leader.Leader):
     # methods to override:
@@ -11,9 +22,9 @@ class ExampleLeader(leader.Leader):
         Path creation for node
         """
         # Note: this is called once during node initialization
-        end = self.path_goal() # Odometry
-        start = self.path_start() # Odometry
-
+        end = self.path_goal().goal # Odometry
+        start = self.path_start().goal # Odometry
+        start.header.frame_id = 'odom'
         self.targets = []
         self.targets.append(start)
 
@@ -23,19 +34,22 @@ class ExampleLeader(leader.Leader):
 
         dt = .1
         des_speed = .5 # m/s
-        dx = end.x - start.x
-        dy = end.y - start.y
-
+        dx = end.pose.pose.position.x - start.pose.pose.position.x
+        dy = end.pose.pose.position.y - start.pose.pose.position.y
+        # total dx above
         heading = math.atan2(dy, dx)
-        dx = des_speed*math.cos(heading)*dt
-        dy = des_speed*math.sin(heading)*dt
-
+        step_x = des_speed*math.cos(heading)*dt
+        step_y = des_speed*math.sin(heading)*dt
+        rospy.loginfo('step_x: '+str(step_x))
         distance = math.sqrt(dx*dx+dy*dy)
-        steps = math.floor(distance/des_speed)
+        steps = math.floor(distance/(des_speed*dt))
 
-        for i in range(1, steps):
+        for i in range(1, int(steps)+1):
             odo = Odometry()
-            odo.pose.pose.point = Point(x=start.x+i*dx, y=start.y+i*dy)
+            odo.header.frame_id = 'odom'
+            odo.pose.pose.position = Point(x=start.pose.pose.position.x+i*step_x, y=start.pose.pose.position.y+i*step_y)
+            rospy.loginfo('gen x: '+str(start.pose.pose.position.x+i*step_x))
+            rospy.loginfo('gen y: '+str(start.pose.pose.position.y+i*step_y))
             odo.pose.pose.orientation = heading_to_quaternion(heading)
             odo.twist.twist.linear = Vector3(x=des_speed)
             odo.twist.twist.angular = Vector3()
@@ -78,6 +92,7 @@ class ExampleLeader(leader.Leader):
 
         for i in range(1, steps):
             odo = Odometry()
+            odo.header.frame_id = 'odom'
             odo.pose.pose.point = Point(x=start.x+i*dx, y=start.y+i*dy)
             odo.pose.pose.orientation = heading_to_quaternion(heading)
             odo.twist.twist.linear = Vector3(x=des_speed)
