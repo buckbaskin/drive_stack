@@ -76,8 +76,9 @@ class ExampleDriver(driver.Driver):
         kurvature = self.kurvature_from_radius(last_radius)
 
         dtime = odom.header.time.secs - self.last_odom.header.time.secs
+        ds = dtime*odom.twist.twist.linear.x
         delta_kurv_discrete = (-1.0*self.a*kurvature -
-            self.b*heading - self.c*off)*dtime
+            self.b*heading - self.c*off)*ds
 
         new_kurvature = kurvature+delta_kurv_discrete
         new_radius = self.radius_from_kurvature(new_kurvature)
