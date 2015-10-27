@@ -46,8 +46,8 @@ class ExampleDriver(driver.Driver):
         if self.last_odom is None:
             self.last_odom = odom
 
-        next_goal = self.lead_goal()
-        if self.dist(next_goal, odom) < .04:
+        next_goal = self.lead_goal().goal
+        while advance_next_goal(odom, next_goal):
             # if you are .04 m or less from the goal, move forward
             # NOTE: this might change.
             # for example, you may want to look at the next_goal two points
@@ -166,6 +166,10 @@ class ExampleDriver(driver.Driver):
             angular_vel = self.max_omega
         elif angular_vel < -1.0*self.max_omega:
             angular_vel = -1.0*self.max_omega
+
+    def advance_next_goal(self, odom, current):
+        along, off, heading = self.calc_errors(odom, current)
+        return along >= 0.0
 
 if __name__ == '__main__':
     # pylint: disable=invalid-name
