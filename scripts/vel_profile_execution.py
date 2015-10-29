@@ -78,11 +78,14 @@ def main_turn_in_place():
     rospy.loginfo('Go')
     # 360deg = 2*pi rad
     # constant dist = 2*pi - .30 rad
+    # 180 deg = pi rad
+    # constant dist = pi - .30 rad
 
     # dist = 1 sec * 0.30 rad/s / 2 = .15 rad
     accel(0.0,0.0, 0.0,0.30, 1.0,pub)
     # dist = 19.94395 sec * 0.3 rad/s = 2*pi - .30 rad
-    constant(0.0,0.30, 19.94395,pub)
+    # dist = 9.4719 sec * 0.3 rad/s = pi - .30 rad
+    constant(0.0,0.30, 9.4719 ,pub)
     # dist = 1 sec * 0.30 rad/s / 2 = .15 rad
     accel(0.0,0.0, 0.30,0.0, 1.0,pub)
 
