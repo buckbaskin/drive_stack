@@ -115,6 +115,7 @@ class Driver(object):
     def __init__(self):
         # ROS pub/sub
         self.cmd_vel = None
+        self.silent_cmd = None
         self.position = None
         # ROS services
         self.lead_back = None
@@ -156,6 +157,7 @@ class Driver(object):
         rospy.init_node('default_driver')
         self.position = rospy.Subscriber('/odom', Odometry, self.process_odom)
         self.cmd_vel = rospy.Publisher('/cmd_vel', Twist, queue_size=1)
+        self.silent_cmd = rospy.Publisher('/silent_cmd', Twist, queue_size=1)
 
     def process_odom(self, odom):
         """
@@ -212,7 +214,7 @@ class Driver(object):
         twist_out.linear.x = linear_vel
         twist_out.angular.z = angular_vel
         if self.silent:
-            rospy.loginfo('v: '+str(linear_vel)+' w: '+str(angular_vel))
+            self.silent_cmd.publish(twist_out)
         else:
             self.cmd_vel.publish(twist_out)
 
