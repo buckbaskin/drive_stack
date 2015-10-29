@@ -47,12 +47,15 @@ def main_straight():
         slow_start.sleep()
     rospy.loginfo('Go')
     # 18ft = 5.4864m
-    # constant dist = 4.9864
+    # 9 ft = 2.7432m
+    # constant dist = 4.9864 m
+    # constant dist = 2.2432 m
 
     # dist = 1 sec * 0.5 m/s / 2 = .25m
     accel(0.0,0.5, 0.0,0.0, 1.0,pub)
-    # dist = 20 sec * 0.5 m/s = 4.9864
-    constant(0.5,0.0,9.9728,pub)
+    # dist = 9.9 sec * 0.5 m/s = 4.9864
+    # dist = 4.4864 sec * 0.5 m/s = 2.2432 m
+    constant(0.5,0.0,4.4864,pub)
     # dist = 1 sec * 0.5 m/s / 2 = .25m
     accel(0.5,0.0, 0.0,0.0, 1.0,pub)
 
@@ -127,7 +130,7 @@ def main_circle(radius):
 
 
 if __name__ == '__main__':
-    # main_straight() # runs forward 18ft
-    # main_turn_in_place() # turns in place 360 degrees
-    radius = 2.7432 # meters, 9ft 
-    main_circle(radius) # drives one circle at the given radius
+    main_straight() # runs forward 9ft
+    main_turn_in_place() # turns in place 180 degrees
+    # radius = 0.5 # meters
+    # main_circle(radius) # drives one 360 degree circle at the given radius
