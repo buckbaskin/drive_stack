@@ -113,7 +113,7 @@ def main_circle(radius):
         w_max = .3
         v_max = w_max*radius
 
-    dist = 2.0*radius*math.pi
+    dist = abs(2.0*radius*math.pi)
     rospy.loginfo('r: '+str(radius)+' v: '+str(v_max)+' w: '+str(w_max))
     dist_const = dist - v_max
     time_const = dist_const / v_max
@@ -133,7 +133,10 @@ def main_circle(radius):
 
 
 if __name__ == '__main__':
-    main_straight() # runs forward 9ft
-    main_turn_in_place() # turns in place 180 degrees
-    # radius = 0.5 # meters
-    # main_circle(radius) # drives one 360 degree circle at the given radius
+    ## there and back again
+    ## main_straight() # runs forward 9ft
+    ## main_turn_in_place() # turns in place 180 degrees
+    ## main_straight()
+    ## main_turn_in_place()
+    radius = -0.5 # meters
+    main_circle(radius) # drives one 360 degree circle at the given radius
