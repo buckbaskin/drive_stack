@@ -2,5 +2,5 @@
   <!-- <node name="wheel_odometry" pkg="drive_stack" type="encoder_to_odom.py" /> -->
   <node name="default_path" pkg="drive_stack" type="path.py" />
   <node name="default_leader" pkg="drive_stack" type="example_leader.py" />
-  <!-- <node name="default_driver" pkg="drive_stack" type="example_driver.py" /> -->
+  <node name="default_driver" pkg="drive_stack" type="example_driver.py" />
 </launch>

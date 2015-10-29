@@ -122,6 +122,8 @@ class Driver(object):
         self.lead_next = None
         self.lead_goal = None
 
+        self.silent = True
+
     def wait_for_services(self):
         """
         # OVERRIDE this method to have the node wait for a service or services
@@ -209,7 +211,10 @@ class Driver(object):
         twist_out = Twist()
         twist_out.linear.x = linear_vel
         twist_out.angular.z = angular_vel
-        self.cmd_vel.publish(twist_out)
+        if self.silent:
+            rospy.loginfo('v: '+str(linear_vel)+' w: '+str(angular_vel))
+        else:
+            self.cmd_vel.publish(twist_out)
 
     def calc_errors(self, location, goal):
         """
@@ -257,7 +262,7 @@ class Driver(object):
         # vector points from the goal to the location
         relative_position = (relative_position_x, relative_position_y, 0.0)
 
-        goal_heading = quaternion_to_heading(goal.pose.pose.position)
+        goal_heading = quaternion_to_heading(goal.pose.pose.orientation)
         goal_vector_x = math.cos(goal_heading)
         goal_vector_y = math.sin(goal_heading)
 
@@ -296,7 +301,7 @@ class Driver(object):
         relative_position = (relative_position_x, relative_position_y,
             relative_position_z)
 
-        goal_heading = quaternion_to_heading(goal.pose.pose.position)
+        goal_heading = quaternion_to_heading(goal.pose.pose.orientation)
         goal_vector_x = math.cos(goal_heading)
         goal_vector_y = math.sin(goal_heading)
 
@@ -319,8 +324,8 @@ class Driver(object):
         """
         return difference in heading between location and goal
         """
-        loc_head = quaternion_to_heading(location.pose.pose.quaternion)
-        goal_head = quaternion_to_heading(goal.pose.pose.quaternion)
+        loc_head = quaternion_to_heading(location.pose.pose.orientation)
+        goal_head = quaternion_to_heading(goal.pose.pose.orientation)
         return loc_head - goal_head
 
     def dist(self, odom1, odom2):

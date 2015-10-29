@@ -84,6 +84,8 @@ class Leader(object):
         """
         return the current goal. callback for service
         """
+        if not(len(self.targets) > self.index+2):
+            self.index = len(self.targets) - 2
         return GoalResponse(self.targets[self.index+1])
 
     def next_callback(self, req=None):

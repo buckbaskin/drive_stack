@@ -47,13 +47,13 @@ class ExampleDriver(driver.Driver):
             self.last_odom = odom
 
         next_goal = self.lead_goal().goal
-        while advance_next_goal(odom, next_goal):
+        while self.advance_next_goal(odom, next_goal):
             # if you are .04 m or less from the goal, move forward
             # NOTE: this might change.
             # for example, you may want to look at the next_goal two points
             #  ahead and see if you want to skip the current one, or if you are
             #  ahead of the current one in the direction that you want to go
-            next_goal = self.lead_next()
+            next_goal = self.lead_next().goal
 
         # errors along axis "x", off axis "y", heading "theta"
         along, off, heading = self.calc_errors(odom, next_goal)
@@ -76,6 +76,7 @@ class ExampleDriver(driver.Driver):
 
         kurvature = self.kurvature_from_radius(last_radius)
 
+        # time may need to be converted from nsecs
         dtime = odom.header.time.secs - self.last_odom.header.time.secs
         ds = dtime*odom.twist.twist.linear.x
         delta_kurv_discrete = (-1.0*self.a*kurvature -
