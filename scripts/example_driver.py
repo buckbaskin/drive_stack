@@ -72,12 +72,11 @@ class ExampleDriver(driver.Driver):
 
         # implement the math
         last_radius = self.calc_old_radius(odom.twist.twist.linear.x,
-            odom.linear.twist.twist.angular.z)
+            odom.twist.twist.angular.z)
 
         kurvature = self.kurvature_from_radius(last_radius)
 
-        # time may need to be converted from nsecs
-        dtime = odom.header.time.secs - self.last_odom.header.time.secs
+        dtime = (odom.header.stamp.nsecs - self.last_odom.header.stamp.nsecs)*pow(10,-9)
         ds = dtime*odom.twist.twist.linear.x
         delta_kurv_discrete = (-1.0*self.a*kurvature -
             self.b*heading - self.c*off)*ds
@@ -167,6 +166,8 @@ class ExampleDriver(driver.Driver):
             angular_vel = self.max_omega
         elif angular_vel < -1.0*self.max_omega:
             angular_vel = -1.0*self.max_omega
+
+        return angular_vel
 
     def advance_next_goal(self, odom, current):
         along, off, heading = self.calc_errors(odom, current)

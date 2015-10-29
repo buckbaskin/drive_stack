@@ -64,12 +64,12 @@ class ExampleLeader(leader.Leader):
         # if rvs: move to the previous segement on the path, starting at the end
         # else: generate a path to the next Path goal
         if not rvs:
-            end = self.path_next()
-            start = self.path_start()
+            end = self.path_next().goal
+            start = self.path_start().goal
         else:
             # move back one segment
-            start = self.path_back()
-            end = start.path_goal()
+            start = self.path_back().goal
+            end = start.path_goal().goal
 
         self.targets = []
         self.targets.append(start)
@@ -80,8 +80,8 @@ class ExampleLeader(leader.Leader):
 
         dt = .1
         des_speed = .5 # m/s
-        dx = end.x - start.x
-        dy = end.y - start.y
+        dx = end.pose.pose.position.x - start.pose.pose.position.x
+        dy = end.pose.pose.position.y - start.pose.pose.position.y
 
         heading = math.atan2(dy, dx)
         dx = des_speed*math.cos(heading)*dt
@@ -90,7 +90,7 @@ class ExampleLeader(leader.Leader):
         distance = math.sqrt(dx*dx+dy*dy)
         steps = math.floor(distance/des_speed)
 
-        for i in range(1, steps):
+        for i in range(1, int(steps)):
             odo = Odometry()
             odo.header.frame_id = 'odom'
             odo.pose.pose.point = Point(x=start.x+i*dx, y=start.y+i*dy)

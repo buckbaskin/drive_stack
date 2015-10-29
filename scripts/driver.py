@@ -164,14 +164,14 @@ class Driver(object):
         Note: this may not work effectively for control. It is an example
         implementation at best.
         """
-        next_goal = self.lead_goal()
+        next_goal = self.lead_goal().goal
         if self.dist(next_goal, odom) < .04:
             # if you are .04 m or less from the goal, move forward
             # NOTE: this might change.
             # for example, you may want to look at the next_goal two points
             #  ahead and see if you want to skip the current one, or if you are
             #  ahead of the current one in the direction that you want to go
-            next_goal = self.lead_next()
+            next_goal = self.lead_next().goal
 
         # errors along axis "x", off axis "y", heading "theta"
         along, off, heading = self.calc_errors(odom, next_goal)

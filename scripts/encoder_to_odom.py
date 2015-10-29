@@ -81,7 +81,10 @@ class WheelOdometryGenerator(object):
             self.last_enc = msg
         dleft = msg.left - self.last_enc.left
         dright = msg.right - self.last_enc.right
+        
         # time is in secs
+        rospy.loginfo('msg type: '+str(type(msg)))
+        rospy.loginfo('last_enc type: '+str(type(msg)))
         dt = (msg.header.stamp.nsecs - self.last_enc.header.stamp.nsecs)*pow(10,-9)
         if dt < 0:
             dt = 0.0

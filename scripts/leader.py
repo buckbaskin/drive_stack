@@ -86,7 +86,7 @@ class Leader(object):
         """
         if not(len(self.targets) > self.index+2):
             self.index = len(self.targets) - 2
-        return GoalResponse(self.targets[self.index+1])
+        return GoalResponse(goal=self.targets[self.index+1])
 
     def next_callback(self, req=None):
         """
@@ -106,7 +106,7 @@ class Leader(object):
         """
         return the current starting point. callback for service
         """
-        return GoalResponse(self.targets[self.index])
+        return GoalResponse(goal=self.targets[self.index])
 
     def back_callback(self, req=None):
         """
@@ -267,7 +267,7 @@ class Leader(object):
         distance = math.sqrt(dx*dx+dy*dy)
         steps = math.floor(distance/des_speed)
 
-        for i in range(1, steps):
+        for i in range(1, int(steps)):
             odo = Odometry()
             odo.pose.pose.point = Point(x=start.x+i*dx, y=start.y+i*dy)
             odo.pose.pose.orientation = heading_to_quaternion(heading)
