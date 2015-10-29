@@ -168,7 +168,7 @@ class WheelOdometryGenerator(object):
         """
         rospy.init_node('encoder2odom')
         self.pub = rospy.Publisher('/odom', Odometry, queue_size=1)
-        self.pub_head = rospy.Publisher('/heading', Float64)
+        self.pub_head = rospy.Publisher('/heading', Float64, queue_size=1)
         self.sub = rospy.Subscriber('/enc', EncMsg, self.process_encoder_msg)
         rospy.loginfo('enc2odom: wheel odometry ready')
         rospy.loginfo('track_width  | wheel_diam   | encoders/rev')
