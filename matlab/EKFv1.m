@@ -57,15 +57,17 @@ classdef EKFv1
             % heading = opo(theta)
             heading = opo(3);
             
-            % bigG = [1 0 complex_thing1; 0 1 complex_thing2, 0 0 1];
             v = con(1);
             w = con(2);
-            % TODO(buckbaskin): add an english description of what big G is
-            % in algorithm
+            % bigG = Jacobian/derviative of the motion update function g
+            % wrt old_pose for linearizing the system.
             bigG = [ 1, 0, -v/w*cos(heading) + v/w*cos(heading + w*dt);
                      0, 1, -v/w*sin(heading) + v/w*sin(heading + w*dt);
                      0, 0, 1];
+            
+            % not in a version of algorithm
             % bigV = [cmplx1, cmplx2; cmplx3, cmplx4; 0, dt];
+            % bigV = TODO(buckbaskin): English description
             cmplx2 = v*(sin(heading)-sin(heading+w*dt))/(w*w) + v*cos(heading+w*dt)*dt/w;
             cmplx4 = -1*v*(cos(heading)-cos(heading+w*dt))/(w*w) + v*sin(heading+w*dt)*dt/w;
             bigV = [(-1*sin(heading)+sin(heading+w*dt))/w, cmplx2;
@@ -102,10 +104,15 @@ classdef EKFv1
                 feat_est(i) = [sqrt(q);
                                atan2(coord(2)-pose_est(2), coord(1)-pose_est(1)) - heading;
                                coord(3)];
+                % bigH = TODO(buckbaskin): English description
                 bigH = [ -1*(coord(1)-pose_est(1))/sqrt(q), -1*(coord(2)-pose_est(2))/sqrt(q), 0;
                          (coord(2)-pose_est(2))/q, -1*(coord(1)-pose_est(1))/q, -1;
                          0, 0, 0];
+                % bigS = TODO(buckbaskin): English description
                 bigS = bigH*cov_est*(bigH.')+bigQ;
+                
+                % bigK = Kalman gain. adjusts update to the pose_est based
+                % on difference in measurement data from expected data
                 bigK = cov_est*(bigH.')/(bigS); % matrix inverse, the slow part
                 pose_est = pose_est + bigK*(fea(i) - feat_est(i));
                 cov_est = (eye(length(features)) - bigK*bigH)*cov_est;
