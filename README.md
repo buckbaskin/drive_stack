@@ -1,5 +1,8 @@
 # drive_stack
 lang:ROS/Python/C++ End to end solution for driving a robot based on position.
+<a href="#" id="status-image-popup" name="status-images" class="open-popup">
+  <img title="Build Status Images" src="https://travis-ci.org/buckbaskin/drive_stack.svg">
+</a>
 
 ## Components
 
