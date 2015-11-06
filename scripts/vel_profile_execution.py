@@ -20,9 +20,14 @@ def accel(start_v, end_v, start_w, end_w, time, pub):
     twist = Twist()
     rospy.loginfo('accelerating...')
     for i in range(0, steps):
-        twist.linear.x = (start_v + dv*steps)
-        twist.angular.z = (start_w + dw*steps)
+        twist.linear.x = (start_v + dv*i)
+        twist.angular.z = (start_w + dw*i)
+        if start_v > end_v:
+            rospy.loginfo('>x>: '+str(twist.linear.x))
         pub.publish(twist)
+        if rospy.is_shutdown():
+            rospy.loginfo('break node loop')
+            break
         rate.sleep()
     rospy.loginfo('...done accelerating')
 
@@ -35,6 +40,9 @@ def constant(start_v, start_w, time, pub):
         twist.linear.x = start_v
         twist.angular.z = start_w
         pub.publish(twist)
+        if rospy.is_shutdown():
+            rospy.loginfo('break node loop')
+            break
         rate.sleep()
     rospy.loginfo('...done constant velocity')
 
@@ -134,9 +142,9 @@ def main_circle(radius):
 
 if __name__ == '__main__':
     ## there and back again
-    ## main_straight() # runs forward 9ft
-    ## main_turn_in_place() # turns in place 180 degrees
-    ## main_straight()
-    ## main_turn_in_place()
-    radius = -0.5 # meters
-    main_circle(radius) # drives one 360 degree circle at the given radius
+    main_straight() # runs forward 9ft
+    # main_turn_in_place() # turns in place 180 degrees
+    # main_straight()
+    # main_turn_in_place()
+    # radius = -0.5 # meters
+    # main_circle(radius) # drives one 360 degree circle at the given radius
