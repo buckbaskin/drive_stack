@@ -6,7 +6,7 @@ before_install:
  - pwd
  - ls
 install: ./install_dependencies.sh
-script: python tests/test_all_of_the_units.py
+script: make test
 branches:
   only:
    - master
