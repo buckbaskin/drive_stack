@@ -1,5 +1,6 @@
 # drive_stack
 lang:ROS/Python/C++ End to end solution for driving a robot based on position.
+[![Build Status](https://travis-ci.org/buckbaskin/drive_stack.svg?branch=master)](https://travis-ci.org/buckbaskin/drive_stack)
 
 ## Components
 
