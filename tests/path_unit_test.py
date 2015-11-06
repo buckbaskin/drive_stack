@@ -13,6 +13,9 @@ class TestPathUnit(unittest.TestCase):
     def test_example(self):
         self.assertEquals(1, 1, "1 != 1")
 
-if __name__ == '__main__':
-    import rosunit
+def run_tests():
+	import rosunit
     rosunit.unitrun(PKG, NAME, TestPathUnit)
+
+if __name__ == '__main__':
+    run_tests()

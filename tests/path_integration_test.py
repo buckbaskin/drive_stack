@@ -36,6 +36,9 @@ class TestPathIntegration(unittest.TestCase):
         self.assetEquals(resp.pose.pose.position.x, 0)
         self.assetEquals(resp.pose.pose.position.y, 0)
 
-if __name__ == '__main__':
+def run_tests():
     import rosunit
     rosunit.unitrun(PKG, NAME, TestPathIntegration)
+
+if __name__ == '__main__':
+    run_tests()
