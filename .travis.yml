@@ -2,6 +2,10 @@ language: python
 sudo: required
 python:
  - "2.7"
+before_install:
+ - pwd
+ - cd buckbaskin/drive_stack
+ - pwd
 install: ./install-dependencies.sh
 script: python tests/test_all_of_the_units.py
 branches:
