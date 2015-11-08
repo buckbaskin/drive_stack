@@ -13,39 +13,44 @@ classdef EKFv1
         last_control;
         map;
     end
-    
+    methods(Static)
+        % utility methods
+        function [time] = time_now()
+            c = clock;
+            time = c(4:length(c));
+        end
+        function [cov] = default_covariance(len)
+            % TODO change this to be something more useful
+            cov = eye(len,len);
+        end
+    end
     methods
-        % function pose_cb(pose)
-        %    obj.last_pose = pose;
-        %    obj.last_covariance = pose.covariance;
-        %    % last_update_time = now();
-        % end
+        % ROS callbacks
         function [obj] = control_cb(obj, cmd)
             obj.last_control = cmd;
-            obj = motion_update(obj, cmd, time.now()-obj.last_update_time());
-            obj.last_update_time = time.now();
+            obj = motion_update(obj, cmd, EKFv1.time_now()-obj.last_update_time());
+            obj.last_update_time = EKFv1.time_now();
         end
-        function [obj] = features_cb(obj, data)
-            % maybe run a motion update here
-            % obj = motion_update(obj, cmd, time.now()-obj.last_update_time());
-            % obj.last_update_time = time.now();
+        function [obj] = default_features_cb(obj, data)
+            % Run a motion update then run a sensor update
+            obj = control_cb(obj, obj.last_control);
             obj = default_sensor_update(obj, data.data, data.corresp);
         end
+        
+        % useful functions for initialization
         function [obj] = set_map(obj, map)
             obj.map = map;
         end
+        function [obj] = user_pose(obj, pose) 
+            obj.last_pose = pose;
+            obj.last_covariance = default_covariance(5);
+        end
+    
         
-        % TODO(buckbaskin): break up update into functions that run when
-        % new data for any given piece comes in (ex. change in cmd, new
-        % sensor reading, that kinda thing)
-        
-        function [pose, covar, likelihood] = update(old_pose, old_covar, control, features, corresp, map, dt)
+        function [obj] = update(obj, control, features, corresp)
             % calculate ekf update for new data
             % inputs:
-            % - old_pose: nx1 vector of state from the last time step 
-            %   (x, y, heading) n=3
-            % - old_covar: nxn covariance matrix of state from the last
-            %    time step
+            % - obj: ekf object to update
             % - control: 2x1 vector of (linear vel, angular vel). Either
             %    requested or executed control (wheel odom?)
             % - features: mx3 vector of measurements to features:
@@ -53,18 +58,15 @@ classdef EKFv1
             %    ignored, because we know which beacon is which
             % - corresp: mx1 vector of labels for the corresponding feature
             %    on the map
-            % - map: a matlab containers.Map(k,v) that maps labels to
-            %    feature locations in the map frame
-            % - dt: time step between updates
             
-            [pose, covar, likelihood] = totalUpdateEKF(old_pose, old_covar, control, features, corresp, map, dt);
+            obj = totalUpdateEKF(obj, control, features, corresp);
         end
         
         function [obj] = totalUpdateEKF(obj, con, fea, cor)
-            dt = time.now() - obj.last_update_time;
+            dt = EKFv1.time_now() - obj.last_update_time;
             obj = motion_update(obj, con, dt);
             obj = default_sensor_update(obj, fea, cor);
-            obj.last_update_time = time.now();
+            obj.last_update_time = EKFv1.time_now();
         end
         
         function [pos] = get_current_pos_est(obj)
