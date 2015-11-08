@@ -259,7 +259,6 @@ classdef EKFv1
             obj.last_covariance = cov_est;
         end
         function [obj] = default_sensor_update(obj, fea, cor)
-            % TODO(buckbaskin): start here
             % bigQ = covariance of measurement noise
             sigma_r = 1;
             sigma_heading = 1;
@@ -271,6 +270,7 @@ classdef EKFv1
             feat_est = zeros(len(fea),1);
             
             pose_est = obj.last_pose;
+            cov_est = obj.last_covariance;
             
             for i = 1:length(features)
                 j = cor(i);
@@ -319,6 +319,23 @@ classdef EKFv1
                 pose_est = pose_est + bigK*(fea(i) - feat_est(i));
                 cov_est = (eye(length(features)) - bigK*bigH)*cov_est;
             end
+            
+            obj.last_pose = pose_est;
+            obj.last_covariance = cov_est;
+            
+            obj = update_likelihood(obj, fea, feat_est);
+        end
+        
+        function [obj] = update_likelihood(obj, features, feat_est)
+            lik = 1;
+            for i = 1:len(features)
+                % TODO(buckbaskin): check the math here
+                % TODO(buckbaskin): check fea vs. feat_est
+                det_term = (det(2*pi()*bigS(i)))^(-1/2);
+                exp_term = exp(-0.5*((features(i)-feat_est(i)).')/bigS(i)*(features(i)-feat_est(i)));
+                lik = lik * det_term * exp_term;
+            end
+            obj.last_likelihood = lik;
         end
     end
     
