@@ -233,7 +233,7 @@ class WheelOdometryGenerator(object):
         self.x += dx
         self.y += dy
         rospy.loginfo('dtheta: '+str(dtheta))
-        self.heading += dtheta
+        self.heading += dtheta*2
         self.v = end_v
         self.omega = end_omega
 
