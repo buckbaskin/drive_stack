@@ -1,6 +1,9 @@
 classdef EKFv1
-    %EKFv1 Summary of this class goes here
-    %   Detailed explanation goes here
+    %EKFv1 Representation of an Extended Kalman Filter for robotic
+    % localization
+    %  Uses an implementation of a Kalman Filter from:
+    %   Probabilistic Robotics (2006) by Thrun, Burgard, Fox pg. 204
+    %   Algorithm EKF_localization_known_correspondences(...)
     
     properties
         last_pose;
@@ -28,7 +31,7 @@ classdef EKFv1
             % obj.last_update_time = time.now();
             obj = default_sensor_update(obj, data.data, data.corresp);
         end
-        function set_map(map)
+        function [obj] = set_map(obj, map)
             obj.map = map;
         end
         
@@ -124,6 +127,9 @@ classdef EKFv1
                     0, 0, sigma_s*sigma_s];
             
             feat_est = zeros(len(fea),1);
+            
+            bigS = zeros(len(fea),1);
+            
             for i = 1:length(features)
                 j = cor(i);
                 % q is the distance squared to the corresponding feature
@@ -157,7 +163,7 @@ classdef EKFv1
                 %    covariance into the measurement model, giving
                 %    uncertainty based on uncertainty
                 % - Q = uncertainty due to measurement noise
-                bigS = bigH*cov_est*(bigH.')+bigQ;
+                bigS(i) = bigH*cov_est*(bigH.')+bigQ;
                 
                 % bigK = Kalman gain. adjusts update to the pose_est based
                 %  on difference in measurement data from expected data
@@ -167,7 +173,7 @@ classdef EKFv1
                 %  the gain will be bigger and a bigger difference between
                 %  the actual measurement and the predicted one will lead to
                 %  a bigger update of the estimated pose.
-                bigK = cov_est*(bigH.')/(bigS); % matrix inverse, the slow part
+                bigK = cov_est*(bigH.')/(bigS(i)); % matrix inverse, the slow part
                 pose_est = pose_est + bigK*(fea(i) - feat_est(i));
                 cov_est = (eye(length(features)) - bigK*bigH)*cov_est;
             end
@@ -175,7 +181,14 @@ classdef EKFv1
             pos = pose_est;
             cov = cov_est;
             
-            % lik = % complicated formula % TODO(buckbaskin): start here
+            lik = 1;
+            for i = 1:len(fea)
+                % TODO(buckbaskin): check the math here
+                % TODO(buckbaskin): check fea vs. feat_est
+                det_term = (det(2*pi()*bigS(i)))^(-1/2);
+                exp_term = exp(-0.5*((fea(i)-feat_est(i)).')/bigS(i)*(fea(i)-feat_est(i)));
+                lik = lik * det_term * exp_term;
+            end
         end
         
         function [pos] = get_current_pos_est(obj)
@@ -263,7 +276,7 @@ classdef EKFv1
                 j = cor(i);
                 % q is the distance squared to the corresponding feature
                 % q = pow(map(j).x-pose_estimate.x, 2) + pow(map(j).y - pose_estimate.y,2);
-                coord = map(j);
+                coord = obj.map(j);
                 q = pow(coord(1)-pose_est(1), 2) + pow(coord(2) - pose_est(2),2);
                 
                 % feat_est = [distance, bearing, signature of the known coordinate]
