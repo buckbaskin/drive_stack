@@ -43,10 +43,26 @@ classdef AMCLv1
             end
             
             obj.last_particles = output_particles;
+            obj.last_update = time.now();
         end
         function [ pose ] = sample_motion_model(obj, control, start_pose)
             % TODO(buckbaskin): implement this for a particular motion
             % model
+            x = start_pose(1);
+            y = start_pose(2);
+            heading = start_pose(3);
+            v = control(1);
+            w = control(2);
+            dt = time.now() - obj.last_time();
+            dheading = w*dt;
+            heading_avg = heading+dheading/2;
+            dx = v*cos(heading_avg)*dt;
+            dy = v*sin(heading_avg)*dt;
+            
+            x = x + dx;
+            y = y + dy;
+            heading = heading + dheading;
+            pose = [x; y; heading];
         end
         function [ lik ] = measurement_model(obj, measurements, pose, map)
             % TODO(buckbaskin): implement this for a specific set of
