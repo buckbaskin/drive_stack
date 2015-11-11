@@ -1,0 +1,23 @@
+AMCL_Algorithm.txt
+Inputs: List of old particles, control, sensor_measurements, map
+Also need: running exponential averages (w_slow, w_fast), constants (a_slow, a_fast)
+
+initialize lists of candidate_particles, output_particles to empty lists
+
+w_avg = 0
+
+for each particle in the input list:
+  move it forward with the given motion model
+  assign it a likelihood based on how well it matches sensor data
+  add {particle, likelihood} pair to candidate_particles
+  w_avg += 1/(# of particles) * likelihood of particle
+  
+calculate w_slow, w_fast
+
+for each particle in the candidate list:
+  if probability[ max(0,1-w_fast/w_slow) ]:
+    add random pose to output_particles
+  else:
+    pick a particle in candidate_particles with weight proportional to its likelihood
+
+return output_particles
