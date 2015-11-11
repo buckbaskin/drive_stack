@@ -8,6 +8,20 @@ from nav_msgs.msg import Odometry
 
 from leader import heading_to_quaternion
 
+def to_unit_tuple(v_tuple):
+    dist = 0
+    dist += pow(v_tuple[0],2)
+    dist += pow(v_tuple[1],2)
+    dist = sqrt(dist)
+
+    return (v_tuple[0]/dist, v_tuple[1]/dist,)
+
+def unit(function):
+    def modded_function(vec_as_tuple):
+        val = function(vec_as_tuple)
+        return to_unit_tuple(val)
+    return modded_function
+
 class ForceLeader(leader.Leader):
     # methods to override:
     # generate_initial_path, generate_next_path
@@ -103,8 +117,76 @@ class ForceLeader(leader.Leader):
         else:
             self.index = 0
 
+    def get_force_vector(self, start, end, x, y):
+        """
+        Aggregate the sum of the force vectors for 3 different actors: departing
+        the original location, arriving at the destination and traversing 
+        between the two points. 
+
+        There may be more added, and the end output is 
+        only relevant for its direction, so the weighting is arbitrary and 
+        relative, where I've fixed the traverse weight to always be 1. 
+
+        This is a superposition of 3 differential equations representing a sum 
+        of forces.
+        """
+        wdep = self.weighted_depart(start, end, x, y)
+        warr = self.weighted_arrive(start, end, x, y)
+        wtrv = self.weighted_traverse(start, end, x, y)
+        # wobs = self.weighted_obstacle(start, end, x, y)
+
+        force = (wdep[0]+warr[0]+wtrv[0], wdep[1]+warr[1]+wtrv[1],)
+
+        return force
+
+    def weighted_depart(self, start, end, x, y):
+        dv = self.depart_vector(self, start, end, x, y)
+        w = self.depart_weight(self, start, end, x, y)
+        return (dv[0]*w,dv[1]*w,)
+
+    @unit # forces a unit vector to be returned, scaled by weight
+    def depart_vector(self, start, end, x, y):
+        # TODO(buckbaskin): define to be a "line-source" for departing start
+        return (1.0,0.0,)
+
+    def depart_weight(self, start, end, x, y):
+        # TODO(buckbaskin): define to scale down with distance
+        return 1.0
+
+    def weighted_arrive(self, start, end, x, y):
+        av = self.arrive_vector(self, start, end, x, y)
+        w = self.arrive_weight(self, start, end, x, y)
+        return (av[0]*w,av[1]*w,)
+
+    @unit # forces a unit vector to be returned, scaled by weight
+    def arrive_vector(self, start, end, x, y):
+        # TODO(buckbaskin): define to be a "line-source" for departing start
+        return (1.0,0.0,)
+
+    def arrive_weight(self, start, end, x, y):
+        # TODO(buckbaskin): define to scale down with distance
+        return 1.0
+
+    def weighted_traverse(self, start, end, x, y):
+        tv = self.traverse_vector(self, start, end, x, y)
+        w = self.traverse_weight(self, start, end, x, y)
+        return (tv[0]*w,tv[1]*w,)
+
+    @unit # forces a unit vector to be returned, scaled by weight
+    def traverse_vector(self, start, end, x, y):
+        dx = end.pose.pose.position.x - start.pose.pose.position.x
+        dy = end.pose.pose.position.y - start.pose.pose.position.y
+        return (dx,dy,)
+
+    def traverse_weight(self, start, end, x, y):
+        # This is the standard unit. All other forces can use a weight of 1 to 
+        #  be of equal weight to the traverse weight. More indicates a greater
+        #  requested priority.
+        return 1.0
+
+
 if __name__ == '__main__':
     # pylint: disable=invalid-name
     # leader is a fine name, it's not a constant
-    leader = ExampleLeader()
+    leader = ForceLeader()
     leader.run_server()
