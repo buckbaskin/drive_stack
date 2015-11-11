@@ -45,14 +45,20 @@ classdef AMCLv1
             obj.last_particles = output_particles;
         end
         function [ pose ] = sample_motion_model(obj, control, start_pose)
-            % TODO(buckbaskin)
+            % TODO(buckbaskin): implement this for a particular motion
+            % model
         end
         function [ lik ] = measurement_model(obj, measurements, pose, map)
-            % TODO(buckbaskin)
-            lik = 1;
+            % TODO(buckbaskin): implement this for a specific set of
+            % measurements
         end
         function [ pose ] = random_pose(obj)
-            % TODO(buckbaskin)
+            max_x = 10;
+            max_y = 10;
+            x = frandom()*max_x;
+            y = frandom()*max_y;
+            heading = frandom()*2*pi;
+            pose = [x; y; heading];
         end
         function [ pose ] = select_pose(obj, candidates)
             total_likelihood = 0;
