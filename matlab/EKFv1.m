@@ -1,45 +1,56 @@
 classdef EKFv1
-    %EKFv1 Summary of this class goes here
-    %   Detailed explanation goes here
+    %EKFv1 Representation of an Extended Kalman Filter for robotic
+    % localization
+    %  Uses an implementation of a Kalman Filter from:
+    %   Probabilistic Robotics (2006) by Thrun, Burgard, Fox pg. 204
+    %   Algorithm EKF_localization_known_correspondences(...)
     
     properties
         last_pose;
         last_covariance;
+        last_likelihood;
         last_update_time;
         last_control;
-        new_features;
-        new_corresp;
         map;
     end
-    
+    methods(Static)
+        % utility methods
+        function [time] = time_now()
+            c = clock;
+            time = c(4:length(c));
+        end
+        function [cov] = default_covariance(len)
+            % TODO change this to be something more useful
+            cov = eye(len,len);
+        end
+    end
     methods
-        function pose_cb(pose)
-            obj.last_pose = pose;
-            obj.last_covariance = pose.covariance;
-            % last_update_time = now();
-        end
-        function control_cb(cmd)
+        % ROS callbacks
+        function [obj] = control_cb(obj, cmd)
             obj.last_control = cmd;
+            obj = motion_update(obj, cmd, EKFv1.time_now()-obj.last_update_time());
+            obj.last_update_time = EKFv1.time_now();
         end
-        function features_cb(data)
-            obj.new_features.append(data);
-            obj.new_corresp.append(data.corresp);
+        function [obj] = default_features_cb(obj, data)
+            % Run a motion update then run a sensor update
+            obj = control_cb(obj, obj.last_control);
+            obj = default_sensor_update(obj, data.data, data.corresp);
         end
-        function set_map(map)
+        
+        % useful functions for initialization
+        function [obj] = set_map(obj, map)
             obj.map = map;
         end
+        function [obj] = user_pose(obj, pose) 
+            obj.last_pose = pose;
+            obj.last_covariance = default_covariance(5);
+        end
+    
         
-        % TODO(buckbaskin): break up update into functions that run when
-        % new data for any given piece comes in (ex. change in cmd, new
-        % sensor reading, that kinda thing)
-        
-        function [pose, covar, likelihood] = update(old_pose, old_covar, control, features, corresp, map, dt)
+        function [obj] = update(obj, control, features, corresp)
             % calculate ekf update for new data
             % inputs:
-            % - old_pose: nx1 vector of state from the last time step 
-            %   (x, y, heading) n=3
-            % - old_covar: nxn covariance matrix of state from the last
-            %    time step
+            % - obj: ekf object to update
             % - control: 2x1 vector of (linear vel, angular vel). Either
             %    requested or executed control (wheel odom?)
             % - features: mx3 vector of measurements to features:
@@ -47,19 +58,41 @@ classdef EKFv1
             %    ignored, because we know which beacon is which
             % - corresp: mx1 vector of labels for the corresponding feature
             %    on the map
-            % - map: a matlab containers.Map(k,v) that maps labels to
-            %    feature locations in the map frame
-            % - dt: time step between updates
             
-            [pose, covar, likelihood] = totalUpdateEKF(old_pose, old_covar, control, features, corresp, map, dt);
+            obj = totalUpdateEKF(obj, control, features, corresp);
         end
         
-        function [pos, cov, lik] = totalUpdateEKF(opo, oco, con, fea, cor, map, dt)
-            % heading = opo(theta)
-            h = opo(3);
+        function [obj] = totalUpdateEKF(obj, con, fea, cor)
+            dt = EKFv1.time_now() - obj.last_update_time;
+            obj = motion_update(obj, con, dt);
+            obj = default_sensor_update(obj, fea, cor);
+            obj.last_update_time = EKFv1.time_now();
+        end
+        
+        function [pos] = get_current_pos_est(obj)
+            pos = obj.last_pose;
+        end
+        function [cov] = get_current_cov_est(obj)
+            cov = obj.last_covariance;
+        end
+        function [lik] = get_current_lik_est(obj)
+            lik = obj.last_likelihood;
+        end
+        
+        function [obj] = motion_update(obj, control, dt)
+            old_pose = obj.last_pose;
+            old_covar = obj.last_covariance;
+            % some useful constants
+            % heading = old_pose(theta)
+            h = old_pose(3);
+            v = control(1);
+            w = control(2);
             
-            v = con(1);
-            w = con(2);
+            % pos = old_pose + [vel model updates w/o noise]
+            pose_est = old_pose + [-v/w*sin(h) + v/w*sin(h + w*dt);
+                         v/w*cos(h) - v/w*cos(h + w*dt);
+                         w*dt];
+            
             % bigG = Jacobian/derviative of the motion update function g
             % wrt old_pose for linearizing the system.
             % G = dg/d(old_pose) = [dx/d(pose_x), dx/d(pose_y), dx/d(pose_z);
@@ -91,11 +124,6 @@ classdef EKFv1
             a = [.1,.05,.05,.1];
             bigM = [a(1)*v*v+a(2)*w*w, 0; 0, a(3)*v*v+a(4)*w*w];
             
-            % pos = opo + [vel model updates w/o noise]
-            pose_est = opo + [-v/w*sin(h) + v/w*sin(h + w*dt);
-                         v/w*cos(h) - v/w*cos(h + w*dt);
-                         w*dt];
-            
             % cov_est = old covariance transformed through the motion model
             %  jacobian at pose_est + mapping of control noise (M) into
             %  state space (via V)
@@ -103,8 +131,12 @@ classdef EKFv1
             % - bigG*old_covar*(G transpose) is the projection of the old
             %    covariance into the new pose space using the linearization
             %    of the motion model of the current position ignoring error
-            cov_est = bigG*oco*(G.')+bigV*bigM*(bigV.');
+            cov_est = bigG*old_covar*(G.')+bigV*bigM*(bigV.');
             
+            obj.last_pose = pose_est;
+            obj.last_covariance = cov_est;
+        end
+        function [obj] = default_sensor_update(obj, fea, cor)
             % bigQ = covariance of measurement noise
             sigma_r = 1;
             sigma_heading = 1;
@@ -114,11 +146,15 @@ classdef EKFv1
                     0, 0, sigma_s*sigma_s];
             
             feat_est = zeros(len(fea),1);
+            
+            pose_est = obj.last_pose;
+            cov_est = obj.last_covariance;
+            
             for i = 1:length(features)
                 j = cor(i);
                 % q is the distance squared to the corresponding feature
                 % q = pow(map(j).x-pose_estimate.x, 2) + pow(map(j).y - pose_estimate.y,2);
-                coord = map(j);
+                coord = obj.map(j);
                 q = pow(coord(1)-pose_est(1), 2) + pow(coord(2) - pose_est(2),2);
                 
                 % feat_est = [distance, bearing, signature of the known coordinate]
@@ -162,10 +198,22 @@ classdef EKFv1
                 cov_est = (eye(length(features)) - bigK*bigH)*cov_est;
             end
             
-            pos = pose_est;
-            cov = cov_est;
+            obj.last_pose = pose_est;
+            obj.last_covariance = cov_est;
             
-            % lik = % complicated formula % TODO(buckbaskin): start here
+            obj = update_likelihood(obj, fea, feat_est);
+        end
+        
+        function [obj] = update_likelihood(obj, features, feat_est)
+            lik = 1;
+            for i = 1:len(features)
+                % TODO(buckbaskin): check the math here
+                % TODO(buckbaskin): check fea vs. feat_est
+                det_term = (det(2*pi()*bigS(i)))^(-1/2);
+                exp_term = exp(-0.5*((features(i)-feat_est(i)).')/bigS(i)*(features(i)-feat_est(i)));
+                lik = lik * det_term * exp_term;
+            end
+            obj.last_likelihood = lik;
         end
     end
     
