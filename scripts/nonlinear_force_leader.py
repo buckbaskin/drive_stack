@@ -6,7 +6,8 @@ import math
 from geometry_msgs.msg import Point, Vector3
 from nav_msgs.msg import Odometry
 
-from leader import heading_to_quaternion
+from utils import heading_to_quaternion, quaternion_to_heading
+from utils import calc_errors, dist
 
 def to_unit_tuple(v_tuple):
     dist = 0
@@ -69,7 +70,7 @@ class ForceLeader(leader.Leader):
 
         self.index = 0
 
-    def generate_next_path(self, rvs):
+    def generate_next_path(self, rvs=False):
         """
         generate a new path, either forwards or backwards (rvs == True)
         """
@@ -117,7 +118,7 @@ class ForceLeader(leader.Leader):
         else:
             self.index = 0
 
-    def get_force_vector(self, start, end, x, y):
+    def get_force_vector(self, start, end, current):
         """
         Aggregate the sum of the force vectors for 3 different actors: departing
         the original location, arriving at the destination and traversing 
@@ -130,7 +131,7 @@ class ForceLeader(leader.Leader):
         This is a superposition of 3 differential equations representing a sum 
         of forces.
         """
-        wdep = self.weighted_depart(start, end, x, y)
+        wdep = self.weighted_depart(start, end, curent)
         warr = self.weighted_arrive(start, end, x, y)
         wtrv = self.weighted_traverse(start, end, x, y)
         # wobs = self.weighted_obstacle(start, end, x, y)
@@ -139,46 +140,62 @@ class ForceLeader(leader.Leader):
 
         return force
 
-    def weighted_depart(self, start, end, x, y):
-        dv = self.depart_vector(self, start, end, x, y)
-        w = self.depart_weight(self, start, end, x, y)
+    def weighted_depart(self, start, end, current):
+        dv = self.depart_vector(self, start, end, current)
+        w = self.depart_weight(self, start, end, current)
         return (dv[0]*w,dv[1]*w,)
 
     @unit # forces a unit vector to be returned, scaled by weight
-    def depart_vector(self, start, end, x, y):
-        # TODO(buckbaskin): define to be a "line-source" for departing start
-        return (1.0,0.0,)
+    def depart_vector(self, start, end, current):
+        # axis direction
+        axis_direction = quaternion_to_heading(start.pose.pose.orientation)
 
-    def depart_weight(self, start, end, x, y):
-        # TODO(buckbaskin): define to scale down with distance
-        return 1.0
+        # correction to move away from axis
+        errors = calc_errors(current, start)
+        off_axis = errors(1)
+        heading_correction = math.atan(2.0*off_axis)
 
-    def weighted_arrive(self, start, end, x, y):
-        av = self.arrive_vector(self, start, end, x, y)
-        w = self.arrive_weight(self, start, end, x, y)
+        final_direction = axis_direction+heading_correction
+
+        return (math.cos(final_direction),math.sin(final_direction),)
+
+    def depart_weight(self, start, end, current):
+        return 1.0/dist(start, current)
+
+    def weighted_arrive(self, start, end, current):
+        av = self.arrive_vector(self, start, end, current)
+        w = self.arrive_weight(self, start, end, current)
         return (av[0]*w,av[1]*w,)
 
     @unit # forces a unit vector to be returned, scaled by weight
-    def arrive_vector(self, start, end, x, y):
-        # TODO(buckbaskin): define to be a "line-source" for departing start
-        return (1.0,0.0,)
+    def arrive_vector(self, start, end, current):
+        # axis direction
+        axis_direction = quaternion_to_heading(end.pose.pose.orientation)
 
-    def arrive_weight(self, start, end, x, y):
-        # TODO(buckbaskin): define to scale down with distance
-        return 1.0
+        # correction to move away from axis
+        errors = calc_errors(current, end)
+        off_axis = errors(1)
+        heading_correction = math.atan(-2.0*off_axis)
 
-    def weighted_traverse(self, start, end, x, y):
-        tv = self.traverse_vector(self, start, end, x, y)
-        w = self.traverse_weight(self, start, end, x, y)
+        final_direction = axis_direction+heading_correction
+
+        return (math.cos(final_direction),math.sin(final_direction),)
+
+    def arrive_weight(self, start, end, current):
+        return 1.0/dist(current, end)
+
+    def weighted_traverse(self, start, end, current):
+        tv = self.traverse_vector(self, start, end, current)
+        w = self.traverse_weight(self, start, end, current)
         return (tv[0]*w,tv[1]*w,)
 
     @unit # forces a unit vector to be returned, scaled by weight
-    def traverse_vector(self, start, end, x, y):
+    def traverse_vector(self, start, end, current):
         dx = end.pose.pose.position.x - start.pose.pose.position.x
         dy = end.pose.pose.position.y - start.pose.pose.position.y
         return (dx,dy,)
 
-    def traverse_weight(self, start, end, x, y):
+    def traverse_weight(self, start, end, current):
         # This is the standard unit. All other forces can use a weight of 1 to 
         #  be of equal weight to the traverse weight. More indicates a greater
         #  requested priority.
