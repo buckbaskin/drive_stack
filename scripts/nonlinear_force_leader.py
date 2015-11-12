@@ -7,15 +7,8 @@ from geometry_msgs.msg import Point, Vector3
 from nav_msgs.msg import Odometry
 
 from utils import heading_to_quaternion, quaternion_to_heading
-from utils import calc_errors, dist
-
-def to_unit_tuple(v_tuple):
-    dist = 0
-    dist += pow(v_tuple[0],2)
-    dist += pow(v_tuple[1],2)
-    dist = sqrt(dist)
-
-    return (v_tuple[0]/dist, v_tuple[1]/dist,)
+from utils import calc_errors, dist, scale
+from utils import unit as to_unit_tuple
 
 def unit(function):
     def modded_function(vec_as_tuple):
@@ -118,6 +111,7 @@ class ForceLeader(leader.Leader):
         else:
             self.index = 0
 
+    @unit # forces a unit vector to be returned, scaled by weight
     def get_force_vector(self, start, end, current):
         """
         Aggregate the sum of the force vectors for 3 different actors: departing
@@ -136,14 +130,14 @@ class ForceLeader(leader.Leader):
         wtrv = self.weighted_traverse(start, end, x, y)
         # wobs = self.weighted_obstacle(start, end, x, y)
 
-        force = (wdep[0]+warr[0]+wtrv[0], wdep[1]+warr[1]+wtrv[1],)
+        force = (wdep[0]+warr[0]+wtrv[0], wdep[1]+warr[1]+wtrv[1], 0,)
 
         return force
 
     def weighted_depart(self, start, end, current):
         dv = self.depart_vector(self, start, end, current)
         w = self.depart_weight(self, start, end, current)
-        return (dv[0]*w,dv[1]*w,)
+        return scale(dv, w)
 
     @unit # forces a unit vector to be returned, scaled by weight
     def depart_vector(self, start, end, current):
@@ -157,7 +151,7 @@ class ForceLeader(leader.Leader):
 
         final_direction = axis_direction+heading_correction
 
-        return (math.cos(final_direction),math.sin(final_direction),)
+        return (math.cos(final_direction),math.sin(final_direction),0,)
 
     def depart_weight(self, start, end, current):
         return 1.0/dist(start, current)
@@ -165,7 +159,7 @@ class ForceLeader(leader.Leader):
     def weighted_arrive(self, start, end, current):
         av = self.arrive_vector(self, start, end, current)
         w = self.arrive_weight(self, start, end, current)
-        return (av[0]*w,av[1]*w,)
+        return scale(av, w)
 
     @unit # forces a unit vector to be returned, scaled by weight
     def arrive_vector(self, start, end, current):
@@ -179,7 +173,7 @@ class ForceLeader(leader.Leader):
 
         final_direction = axis_direction+heading_correction
 
-        return (math.cos(final_direction),math.sin(final_direction),)
+        return (math.cos(final_direction),math.sin(final_direction),0,)
 
     def arrive_weight(self, start, end, current):
         return 1.0/dist(current, end)
@@ -187,13 +181,13 @@ class ForceLeader(leader.Leader):
     def weighted_traverse(self, start, end, current):
         tv = self.traverse_vector(self, start, end, current)
         w = self.traverse_weight(self, start, end, current)
-        return (tv[0]*w,tv[1]*w,)
+        return scale(tv, w)
 
     @unit # forces a unit vector to be returned, scaled by weight
     def traverse_vector(self, start, end, current):
         dx = end.pose.pose.position.x - start.pose.pose.position.x
         dy = end.pose.pose.position.y - start.pose.pose.position.y
-        return (dx,dy,)
+        return (dx,dy,0,)
 
     def traverse_weight(self, start, end, current):
         # This is the standard unit. All other forces can use a weight of 1 to 
