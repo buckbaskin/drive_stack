@@ -63,7 +63,7 @@ def unit(vector):
         vector[2]*vector[2])
     return scale(vector, 1.0/length)
 
-def calc_errors(self, location, goal):
+def calc_errors(location, goal):
     """
     calculate errors in "x", "y", "theta" between a location and a goal
 
@@ -75,14 +75,14 @@ def calc_errors(self, location, goal):
     example usage:
     odom = Odometry(current location)
     goal = Odometry(target location)
-    along_axis, off_axis, heading = self.calc_errors(odom, goal)
+    along_axis, off_axis, heading = calc_errors(odom, goal)
     """
-    along = self.along_axis_error(location, goal)
-    off = self.off_axis_error(location, goal)
-    heading = self.heading_error(location, goal)
+    along = along_axis_error(location, goal)
+    off = off_axis_error(location, goal)
+    heading = heading_error(location, goal)
     return (along, off, heading,)
 
-def along_axis_error(self, location, goal):
+def along_axis_error(location, goal):
     """
     calc error along the axis defined by the goal position and direction
 
@@ -116,7 +116,7 @@ def along_axis_error(self, location, goal):
 
     return dot_product(relative_position, goal_vector)
 
-def off_axis_error(self, location, goal):
+def off_axis_error(location, goal):
     """
     calc error normal to axis defined by the goal position and direction
 
@@ -165,7 +165,7 @@ def off_axis_error(self, location, goal):
         relative_normal_z*relative_normal_z)
 
 
-def heading_error(self, location, goal):
+def heading_error(location, goal):
     """
     return difference in heading between location and goal
     """
@@ -173,7 +173,7 @@ def heading_error(self, location, goal):
     goal_head = quaternion_to_heading(goal.pose.pose.orientation)
     return loc_head - goal_head
 
-def dist(self, odom1, odom2):
+def dist(odom1, odom2):
     """
     returns linear distance between two odometry messages
     """
