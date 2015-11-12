@@ -15,6 +15,9 @@ def unit(function):
         return to_unit_tuple(val)
     return modded_function
 
+# pylint: disable=no-self-use
+# the class functions are used. I'm not sure why it's missing this.
+
 class ForceLeader(leader.Leader):
     # methods to override:
     # generate_initial_path, generate_next_path
@@ -40,16 +43,20 @@ class ForceLeader(leader.Leader):
         self.targets = []
         self.targets.append(start)
 
+        # pylint: disable=invalid-name
+        # dt, v, w, are accurately describing what I want in this case
+
         dt = .1
 
         current = StateModel(start)
-        fv = self.get_force_vector(start, end, start)
-        force_heading = math.atan2(fv[1], fv[0])
+        force_vector = self.get_force_vector(start, end, start)
+        force_heading = math.atan2(force_vector[1], force_vector[0])
         heading_err = current.theta - force_heading
         w = heading_err/dt
-        v = 0.75 # TODO(buckbaskin): calculate something smart based on vel profile from start to end
-        # possibly do vel profile based on distance, slow down proportional to heading error relative
-        #  to force field
+        v = 0.75 # TODO(buckbaskin): calculate something smart based on vel
+        # profile from start to end
+        # possibly do vel profile based on distance, slow down proportional to
+        #  heading error relative to force field
 
         next_ = current.sample_motion_model(v, w, dt)
         self.targets.append(next_)
@@ -57,11 +64,14 @@ class ForceLeader(leader.Leader):
         errors = calc_errors(next_, end)
         along = errors[0]
 
-        while (along < 0):
+        while along < 0:
             current = StateModel(next_)
-            fv = self.get_force_vector(start, end, next_)
-            force_heading = math.atan2(fv[1], fv[0])
+            force_vector = self.get_force_vector(start, end, next_)
+            force_heading = math.atan2(force_vector[1], force_vector[0])
             heading_err = current.theta - force_heading
+
+            # pylint: disable=invalid-name
+            # v, w, are accurately describing what I want in this case
             w = heading_err/dt
             v = 0.75
 
@@ -79,14 +89,14 @@ class ForceLeader(leader.Leader):
     def get_force_vector(self, start, end, current):
         """
         Aggregate the sum of the force vectors for 3 different actors: departing
-        the original location, arriving at the destination and traversing 
-        between the two points. 
+        the original location, arriving at the destination and traversing
+        between the two points.
 
-        There may be more added, and the end output is 
-        only relevant for its direction, so the weighting is arbitrary and 
-        relative, where I've fixed the traverse weight to always be 1. 
+        There may be more added, and the end output is
+        only relevant for its direction, so the weighting is arbitrary and
+        relative, where I've fixed the traverse weight to always be 1.
 
-        This is a superposition of 3? differential equations representing a sum 
+        This is a superposition of 3? differential equations representing a sum
         of forces.
         """
         wdep = self.weighted_depart(start, end, current)
@@ -99,12 +109,14 @@ class ForceLeader(leader.Leader):
         return force
 
     def weighted_depart(self, start, end, current):
-        dv = self.depart_vector(start, end, current)
+        depart_vector = self.depart_vector(start, end, current)
         w = self.depart_weight(start, end, current)
-        return scale(dv, w)
+        return scale(depart_vector, w)
 
+    # pylint: disable=unused-argument
+    # it is being left in to maintain method signature consistency
     @unit # forces a unit vector to be returned, scaled by weight
-    def depart_vector(self, start, _, current):
+    def depart_vector(self, start, unused_end, current):
         # axis direction
         axis_direction = quaternion_to_heading(start.pose.pose.orientation)
 
@@ -115,18 +127,22 @@ class ForceLeader(leader.Leader):
 
         final_direction = axis_direction+heading_correction
 
-        return (math.cos(final_direction),math.sin(final_direction),0,)
+        return (math.cos(final_direction), math.sin(final_direction), 0,)
 
-    def depart_weight(self, start, _, current):
+    # pylint: disable=unused-argument
+    # it is being left in to maintain method signature consistency
+    def depart_weight(self, start, unused_end, current):
         return 1.0/dist(start, current)
 
     def weighted_arrive(self, start, end, current):
-        av = self.arrive_vector(start, end, current)
+        arrive_vector = self.arrive_vector(start, end, current)
         w = self.arrive_weight(start, end, current)
-        return scale(av, w)
+        return scale(arrive_vector, w)
 
+    # pylint: disable=unused-argument
+    # it is being left in to maintain method signature consistency
     @unit # forces a unit vector to be returned, scaled by weight
-    def arrive_vector(self, _, end, current):
+    def arrive_vector(self, unused_start, end, current):
         # axis direction
         axis_direction = quaternion_to_heading(end.pose.pose.orientation)
 
@@ -137,24 +153,30 @@ class ForceLeader(leader.Leader):
 
         final_direction = axis_direction+heading_correction
 
-        return (math.cos(final_direction),math.sin(final_direction),0,)
+        return (math.cos(final_direction), math.sin(final_direction), 0,)
 
-    def arrive_weight(self, _, end, current):
+    # pylint: disable=unused-argument
+    # it is being left in to maintain method signature consistency
+    def arrive_weight(self, unused_start, end, current):
         return 1.0/dist(current, end)
 
     def weighted_traverse(self, start, end, current):
-        tv = self.traverse_vector(start, end, current)
+        traverse_vector = self.traverse_vector(start, end, current)
         w = self.traverse_weight(start, end, current)
-        return scale(tv, w)
+        return scale(traverse_vector, w)
 
+    # pylint: disable=unused-argument
+    # it is being left in to maintain method signature consistency
     @unit # forces a unit vector to be returned, scaled by weight
-    def traverse_vector(self, start, end, _):
+    def traverse_vector(self, start, end, unused_current):
         dx = end.pose.pose.position.x - start.pose.pose.position.x
         dy = end.pose.pose.position.y - start.pose.pose.position.y
-        return (dx,dy,0,)
+        return (dx, dy, 0,)
 
-    def traverse_weight(self, _, _, _):
-        # This is the standard unit. All other forces can use a weight of 1 to 
+    # pylint: disable=unused-argument
+    # it is being left in to maintain method signature consistency
+    def traverse_weight(self, unused_start, unused_end, unused_current):
+        # This is the standard unit. All other forces can use a weight of 1 to
         #  be of equal weight to the traverse weight. More indicates a greater
         #  requested priority.
         return 1.0
@@ -171,7 +193,7 @@ class StateModel(object):
 
     def sample_motion_model(self, v, w, dt):
         '''
-        Return an odometry message sampled from the distribution defined by the 
+        Return an odometry message sampled from the distribution defined by the
         probabilistic motion model based on this statemodel
         Does not yet take full advantage of state stored in above
         And does not check acceleration bounds for example
@@ -187,8 +209,12 @@ class StateModel(object):
         if w_hat < .001:
             pass
 
-        x_new = self.x - v_hat/w_hat*math.sin(self.theta) + v_hat/w_hat*math.sin(self.theta+w_hat*dt)
-        y_new = self.y - v_hat/w_hat*math.cos(self.theta) - v_hat/w_hat*math.cos(self.theta+w_hat*dt)
+        x_new = (self.x - v_hat/w_hat*math.sin(self.theta)
+            + v_hat/w_hat*math.sin(self.theta+w_hat*dt))
+
+        y_new = (self.y - v_hat/w_hat*math.cos(self.theta)
+            - v_hat/w_hat*math.cos(self.theta+w_hat*dt))
+
         theta_new = self.theta + w_hat*dt + y_hat*dt
 
         new_odom = Odometry()
@@ -200,8 +226,11 @@ class StateModel(object):
 
         return new_odom
 
+    # pylint: disable=unused-argument
+    # it will be used when implmenented properly
     def sample_normal(self, unused_b):
-        # TODO(buckbaskin): change to sample normal distribution norm(mean=0, stdev = b)
+        # TODO(buckbaskin): change to sample normal distribution
+        # norm(mean=0, stdev = b)
         return 0
 
 
