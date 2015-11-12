@@ -26,42 +26,7 @@ class ForceLeader(leader.Leader):
         """
         Path creation for node
         """
-        # TODO(buckbaskin): Completely revise this
-        # Note: this is called once during node initialization
-        end = self.path_goal().goal # Odometry
-        start = self.path_start().goal # Odometry
-        start.header.frame_id = 'odom'
-        self.targets = []
-        self.targets.append(start)
-
-        # pylint: disable=invalid-name
-        # dt, dx, dy properly express what I'm trying to get across
-        # i.e. differential time, x, y
-
-        dt = .1
-        des_speed = .5 # m/s
-        dx = end.pose.pose.position.x - start.pose.pose.position.x
-        dy = end.pose.pose.position.y - start.pose.pose.position.y
-        # total dx above
-        heading = math.atan2(dy, dx)
-        step_x = des_speed*math.cos(heading)*dt
-        step_y = des_speed*math.sin(heading)*dt
-        rospy.loginfo('step_x: '+str(step_x))
-        distance = math.sqrt(dx*dx+dy*dy)
-        steps = math.floor(distance/(des_speed*dt))
-
-        for i in range(1, int(steps)+1):
-            odo = Odometry()
-            odo.header.frame_id = 'odom'
-            odo.pose.pose.position = Point(x=start.pose.pose.position.x+i*step_x, y=start.pose.pose.position.y+i*step_y)
-            rospy.loginfo('gen x: '+str(start.pose.pose.position.x+i*step_x))
-            rospy.loginfo('gen y: '+str(start.pose.pose.position.y+i*step_y))
-            odo.pose.pose.orientation = heading_to_quaternion(heading)
-            odo.twist.twist.linear = Vector3(x=des_speed)
-            odo.twist.twist.angular = Vector3()
-            self.targets.append(odo)
-
-        self.index = 0
+        self.generate_next_path(rvs=False)
 
     def generate_next_path(self, rvs=False):
         """
@@ -81,35 +46,40 @@ class ForceLeader(leader.Leader):
         self.targets = []
         self.targets.append(start)
 
-        # pylint: disable=invalid-name
-        # dt, dx, dy properly express what I'm trying to get across
-        # i.e. differential time, x, y
-
         dt = .1
-        des_speed = .5 # m/s
-        dx = end.pose.pose.position.x - start.pose.pose.position.x
-        dy = end.pose.pose.position.y - start.pose.pose.position.y
 
-        heading = math.atan2(dy, dx)
-        dx = des_speed*math.cos(heading)*dt
-        dy = des_speed*math.sin(heading)*dt
+        current = StateModel(start)
+        fv = get_force_vector(start, end, start)
+        force_heading = math.atan2(fv(1), fv(0))
+        heading_err = current.theta - force_heading
+        w = heading_err/dt
+        v = 0.75 # TODO(buckbaskin): calculate something smart based on vel profile from start to end
+        # possibly do vel profile based on distance, slow down proportional to heading error relative
+        #  to force field
 
-        distance = math.sqrt(dx*dx+dy*dy)
-        steps = math.floor(distance/des_speed)
+        next = current.sample_motion_model(v, w, dt)
+        self.targets.append(next)
 
-        for i in range(1, int(steps)):
-            odo = Odometry()
-            odo.header.frame_id = 'odom'
-            odo.pose.pose.point = Point(x=start.x+i*dx, y=start.y+i*dy)
-            odo.pose.pose.orientation = heading_to_quaternion(heading)
-            odo.twist.twist.linear = Vector3(x=des_speed)
-            odo.twist.twist.angular = Vector3()
-            self.targets.append(odo)
+        errors = calc_errors(next, end)
+        along = errors(0)
 
-        if rvs:
-            self.index = len(self.targets)-2
-        else:
-            self.index = 0
+        while (along < 0):
+            current = StateModel(next)
+            fv = get_force_vector(start, end, next)
+            force_heading = math.atan2(fv(1), fv(0))
+            heading_err = current.theta - force_heading
+            w = heading_err/dt
+            v = 0.75
+
+            next = current.sample_motion_model(v, w, dt)
+            self.targets.append(next)
+
+            errors = calc_errors(next, end)
+            along = errors(0)
+
+        self.index = 0
+
+
 
     @unit # forces a unit vector to be returned, scaled by weight
     def get_force_vector(self, start, end, current):
@@ -122,7 +92,7 @@ class ForceLeader(leader.Leader):
         only relevant for its direction, so the weighting is arbitrary and 
         relative, where I've fixed the traverse weight to always be 1. 
 
-        This is a superposition of 3 differential equations representing a sum 
+        This is a superposition of 3? differential equations representing a sum 
         of forces.
         """
         wdep = self.weighted_depart(start, end, curent)
@@ -194,6 +164,52 @@ class ForceLeader(leader.Leader):
         #  be of equal weight to the traverse weight. More indicates a greater
         #  requested priority.
         return 1.0
+
+class StateModel
+    def __init__(self, odom):
+        self.x = odom.pose.pose.position.x
+        self.y = odom.pose.pose.position.y
+        self.theta = quaternion_to_heading(odom.pose.pose.orientation)
+        self.v = odom.twist.twist.linear.x
+        self.w = odom.twist.twist.angular.z
+        self.a = 0
+        self.alpha = 0
+
+    def sample_motion_model(self, v, w, dt):
+        '''
+        Return an odometry message sampled from the distribution defined by the 
+        probabilistic motion model based on this statemodel
+        Does not yet take full advantage of state stored in above
+        And does not check acceleration bounds for example
+        '''
+        # TODO(buckbaskin): use the v,w data stored above to add accel limits
+        # TODO(buckbaskin): use the v,w data to create more accurate v_hat
+
+        noise = (0.0, 0.0, 0.0, 0.0, 0.0, 0.0) # no noise for now, ideal motion
+        v_hat = v + sample_normal(noise(0)*v+noise(1)*w)
+        w_hat = w + sample_normal(noise(2)*v+noise(3)*w)
+        y_hat = sample_normal(noise(4)*v+noise(5)*w)
+
+        if w_hat < .001:
+            pass
+
+        x_new = self.x - v_hat/w_hat*math.sin(self.theta) + v_hat/w_hat*math.sin(self.theta+w_hat*dt)
+        y_new = self.y - v_hat/w_hat*math.cos(self.theta) - v_hat/w_hat*math.cos(self.theta+w_hat*dt)
+        theta_new = self.theta + w_hat*dt + y_hat*dt
+
+        new_odom = Odometry()
+        new_odom.pose.pose.position.x = x_new
+        new_odom.pose.pose.position.y = y_new
+        new_odom.pose.pose.orientation = heading_to_quaternion(theta_new)
+        new_odom.twist.twist.linear.x = v_hat
+        new_odom.twist.twist.angular.z = w_hat
+
+        return new_odom
+
+    def sample_normal(self, b):
+        # TODO(buckbaskin): change to sample normal distribution
+        return 0
+
 
 
 if __name__ == '__main__':
