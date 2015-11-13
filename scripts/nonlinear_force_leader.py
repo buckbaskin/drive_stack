@@ -55,14 +55,14 @@ class ForceLeader(leader.Leader):
         force_heading = math.atan2(force_vector[1], force_vector[0])
         heading_err = current.theta - force_heading
         w = heading_err/dt
-        v = 0.75 # TODO(buckbaskin): calculate something smart based on vel
+        v = 0.5 # TODO(buckbaskin): calculate something smart based on vel
         # profile from start to end
         # possibly do vel profile based on distance, slow down proportional to
         #  heading error relative to force field
 
         rospy.loginfo('gnxt: '+str(force_heading)+' ... '+str(current.theta))
 
-        next_ = current.sample_motion_model(v, w, dt)
+        next_ = current.sample_motion_model2(v, w, dt)
         self.targets.append(next_)
 
         errors = calc_errors(next_, end)
@@ -70,9 +70,9 @@ class ForceLeader(leader.Leader):
 
         count = 1
 
-        while along < 0:
-            if count > 0:
-                break
+        while along < -0.01:
+            # if count > 10:
+            #     break
             current = StateModel(next_)
             force_vector = self.get_force_vector(start, end, next_)
             force_heading = math.atan2(force_vector[1], force_vector[0])
@@ -84,13 +84,14 @@ class ForceLeader(leader.Leader):
             v = 0.75
 
             count += 1
-            next_ = current.sample_motion_model(v, w, dt)
+            next_ = current.sample_motion_model2(v, w, dt)
             self.targets.append(next_)
 
             
 
             errors = calc_errors(next_, end)
             along = errors[0]
+            rospy.loginfo('alongher alenghi alphabet: '+str(along))
 
         self.index = 0
 
@@ -214,6 +215,71 @@ class StateModel(object):
         self.alpha = 0
         self.frame_id = odom.header.frame_id
 
+    def sample_motion_model2(self, v, w, dt):
+        '''
+        Return an odometry message sampled from the distribution defined by the
+        probabilistic motion model based on this statemodel
+        Does not yet take full advantage of state stored in above
+        And does not check acceleration bounds for example
+        '''
+        accel_max = .1
+        alpha_max = .05
+
+        delta_v_req = v - self.v
+        delta_v_max = accel_max*dt
+        if delta_v_req > 0:
+            if delta_v_max > delta_v_req:
+                accel_time = delta_v_req / accel_max
+                v_avg = v*(dt-accel_time) + (v+accel_max*2.0)*accel_time
+                v_new = v
+            else:
+                v_avg = self.v+accel_max/2.0
+                v_new = self.v+accel_max
+        else:
+            if delta_v_max > abs(delta_v_req):
+                accel_time = abs(delta_v_req) / accel_max
+                v_avg = v*(dt-accel_time) + (v-accel_max*2.0)*accel_time
+                v_new = v
+            else:
+                v_avg = self.v-accel_max/2.0
+                v_new = self.v-accel_max
+
+        ds = v_avg*dt
+
+        rospy.loginfo('smm2: ds: '+str(ds))
+
+        delta_w_req = w - self.w
+        delta_w_max = alpha_max*dt
+        if delta_w_req > 0:
+            if delta_w_max > delta_w_req:
+                accel_time = delta_w_req / alpha_max
+                w_avg = w*(dt-accel_time) + (w+alpha_max*2.0)*accel_time
+                w_new = w
+            else:
+                w_avg = self.w+alpha_max/2.0
+                w_new = self.w+alpha_max
+        else:
+            if delta_w_max > abs(delta_w_req):
+                accel_time = abs(delta_w_req) / alpha_max
+                w_avg = w*(dt-accel_time) + (w-alpha_max*2.0)*accel_time
+                w_new = w
+            else:
+                w_avg = self.w-alpha_max/2.0
+                w_new = self.w-alpha_max
+
+        dtheta = w_avg*dt
+        theta_avg = self.theta + dtheta/2.0
+
+        new_odom = Odometry()
+        new_odom.pose.pose.position.x = self.x+ds*math.cos(theta_avg)
+        new_odom.pose.pose.position.y = self.y+ds*math.sin(theta_avg)
+        new_odom.pose.pose.orientation = heading_to_quaternion(self.theta + dtheta)
+        new_odom.twist.twist.linear.x = v_new
+        new_odom.twist.twist.angular.z = w_new
+        new_odom.header.frame_id = self.frame_id
+
+        return new_odom
+
     def sample_motion_model(self, v, w, dt):
         '''
         Return an odometry message sampled from the distribution defined by the
@@ -230,15 +296,17 @@ class StateModel(object):
         y_hat = self.sample_normal(noise[4]*v+noise[5]*w)
 
         if w_hat < .001:
-            pass
-
-        rospy.loginfo('smm: '+str(v)+' , '+str(w)+' , '+str(dt))
-        x_new = (self.x - v_hat/w_hat*math.sin(self.theta)
-            + v_hat/w_hat*math.sin(self.theta+w_hat*dt))
-        rospy.loginfo('smm: dx '+str(x_new-self.x))
-        y_new = (self.y - v_hat/w_hat*math.cos(self.theta)
-            - v_hat/w_hat*math.cos(self.theta+w_hat*dt))
-        rospy.loginfo('smm: dy '+str(y_new-self.y))
+            rospy.loginfo('what is too small')
+            x_new = self.x + v_hat*math.cos(self.theta)
+            y_new = self.y + v_hat*math.sin(self.theta)
+        else:
+            rospy.loginfo('smm: '+str(v)+' , '+str(w)+' , '+str(dt))
+            x_new = (self.x - v_hat/w_hat*math.sin(self.theta)
+                + v_hat/w_hat*math.sin(self.theta+w_hat*dt))
+            rospy.loginfo('smm: dx '+str(x_new-self.x))
+            y_new = (self.y - v_hat/w_hat*math.cos(self.theta)
+                - v_hat/w_hat*math.cos(self.theta+w_hat*dt))
+            rospy.loginfo('smm: dy '+str(y_new-self.y))
 
         theta_new = self.theta + w_hat*dt + y_hat*dt
 

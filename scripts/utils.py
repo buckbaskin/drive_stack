@@ -148,8 +148,6 @@ def off_axis_error(location, goal):
     see calc_errors above
     """
 
-    # TODO(buckbaskin): start here - off axis error is wrong I think
-
     relative_position_x = (location.pose.pose.position.x -
         goal.pose.pose.position.x)
     relative_position_y = (location.pose.pose.position.y -
@@ -162,6 +160,9 @@ def off_axis_error(location, goal):
     relative_position = (relative_position_x, relative_position_y,
         relative_position_z)
 
+    if under_minimum(relative_position):
+        return 0.0
+
     goal_heading = quaternion_to_heading(goal.pose.pose.orientation)
     goal_vector_x = math.cos(goal_heading)
     goal_vector_y = math.sin(goal_heading)
@@ -169,10 +170,7 @@ def off_axis_error(location, goal):
     # vector in the direction of the goal heading, axis of desired motion
     goal_vector = (goal_vector_x, goal_vector_y, 0.0)
 
-    if under_minimum(relative_position):
-        return 0.0
-
-    relative_along_goal = scale(unit(relative_position),
+    relative_along_goal = scale(unit(goal_vector),
         dot_product(relative_position, goal_vector))
 
     relative_normal_x = relative_position[0]-relative_along_goal[0]
