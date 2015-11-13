@@ -9,7 +9,7 @@ import math
 from geometry_msgs.msg import Point, Vector3
 from nav_msgs.msg import Odometry
 
-from leader import heading_to_quaternion
+from utils import heading_to_quaternion
 
 class ExampleLeader(leader.Leader):
     # methods to override:
