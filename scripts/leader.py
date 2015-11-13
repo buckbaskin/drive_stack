@@ -36,21 +36,7 @@ from drive_stack.srv import Goal, GoalResponse
 from rostype import returns
 from tf import transformations as tft
 
-def heading_to_quaternion(heading):
-    """
-    Converts a Euler yaw/heading angle to equivalent quaternion
-    input: euler heading in radians
-    output: nav_msgs.msg.Quaternion
-    """
-
-    quat = tft.quaternion_from_euler(0, 0, heading)
-
-    quaternion = Quaternion()
-    quaternion.x = quat[0]
-    quaternion.y = quat[1]
-    quaternion.z = quat[2]
-    quaternion.w = quat[3]
-    return quaternion
+from utils import heading_to_quaternion
 
 class Leader(object):
     """
