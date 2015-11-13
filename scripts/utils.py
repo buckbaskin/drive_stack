@@ -181,4 +181,12 @@ def dist(odom1, odom2):
     # x and y accurately represent the axis that I'm referring to
     x = odom1.pose.pose.position.x - odom2.pose.pose.position.x
     y = odom1.pose.pose.position.y - odom2.pose.pose.position.y
-    return math.sqrt(x*x+y*y)
+
+def easy_Odom(x, y, heading=0.0, v=0.0, w=0.0, frame='odom'):
+    odom = Odometry()
+    odom.pose.pose.position.x = x
+    odom.pose.pose.position.y = y
+    odom.pose.pose.orientation = heading_to_quaternion(heading)
+    odom.twist.twist.linear.x = v
+    odom.twist.twist.angular.z = w
+    return odom
