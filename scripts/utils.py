@@ -1,3 +1,9 @@
+import math
+
+from nav_msgs.msg import Odometry
+from geometry_msgs.msg import Twist, Quaternion
+from tf import transformations as tft
+
 def quaternion_to_heading(quaternion):
     """
     Converts a quaternion to equivalent Euler yaw/heading
@@ -61,7 +67,14 @@ def unit(vector):
     """
     length = math.sqrt(vector[0]*vector[0]+vector[1]*vector[1]+
         vector[2]*vector[2])
+    if under_minimum(vector):
+        raise ZeroDivisionError('vector length 0 cannot be scaled to a unit vector')
     return scale(vector, 1.0/length)
+
+def under_minimum(vector):
+    length = math.sqrt(vector[0]*vector[0]+vector[1]*vector[1]+
+        vector[2]*vector[2])
+    return length < .0001
 
 def calc_errors(location, goal):
     """
@@ -134,6 +147,9 @@ def off_axis_error(location, goal):
     example use:
     see calc_errors above
     """
+
+    # TODO(buckbaskin): start here - off axis error is wrong I think
+
     relative_position_x = (location.pose.pose.position.x -
         goal.pose.pose.position.x)
     relative_position_y = (location.pose.pose.position.y -
@@ -152,6 +168,9 @@ def off_axis_error(location, goal):
 
     # vector in the direction of the goal heading, axis of desired motion
     goal_vector = (goal_vector_x, goal_vector_y, 0.0)
+
+    if under_minimum(relative_position):
+        return 0.0
 
     relative_along_goal = scale(unit(relative_position),
         dot_product(relative_position, goal_vector))
@@ -182,6 +201,8 @@ def dist(odom1, odom2):
     x = odom1.pose.pose.position.x - odom2.pose.pose.position.x
     y = odom1.pose.pose.position.y - odom2.pose.pose.position.y
 
+    return math.sqrt(x*x+y*y)
+
 def easy_Odom(x, y, heading=0.0, v=0.0, w=0.0, frame='odom'):
     odom = Odometry()
     odom.pose.pose.position.x = x
@@ -189,4 +210,17 @@ def easy_Odom(x, y, heading=0.0, v=0.0, w=0.0, frame='odom'):
     odom.pose.pose.orientation = heading_to_quaternion(heading)
     odom.twist.twist.linear.x = v
     odom.twist.twist.angular.z = w
+    odom.header.frame_id = frame
     return odom
+
+def minimize_angle(delta):
+    while (delta > 2*math.pi):
+        delta = delta - 2*math.pi
+    while (delta < 2*math.pi):
+        delta = delta + 2*math.pi
+    if delta > math.pi:
+        delta = -2*math.pi + delta
+    if delta < math.pi:
+        deta = 2*math.pi + delta
+
+    return delta

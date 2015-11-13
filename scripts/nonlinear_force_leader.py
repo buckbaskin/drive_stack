@@ -1,17 +1,17 @@
 #!/usr/bin/env python
 
 import leader
-# import rospy
+import rospy
 import math
 from nav_msgs.msg import Odometry
 
 from utils import heading_to_quaternion, quaternion_to_heading
-from utils import calc_errors, dist, scale
+from utils import calc_errors, dist, scale, minimize_angle
 from utils import unit as to_unit_tuple
 
 def unit(function):
-    def modded_function(vec_as_tuple):
-        val = function(vec_as_tuple)
+    def modded_function(*args, **varargs):
+        val = function(*args, **varargs)
         return to_unit_tuple(val)
     return modded_function
 
@@ -48,6 +48,8 @@ class ForceLeader(leader.Leader):
 
         dt = .1
 
+        start.header.frame_id = 'odom'
+
         current = StateModel(start)
         force_vector = self.get_force_vector(start, end, start)
         force_heading = math.atan2(force_vector[1], force_vector[0])
@@ -58,25 +60,34 @@ class ForceLeader(leader.Leader):
         # possibly do vel profile based on distance, slow down proportional to
         #  heading error relative to force field
 
+        rospy.loginfo('gnxt: '+str(force_heading)+' ... '+str(current.theta))
+
         next_ = current.sample_motion_model(v, w, dt)
         self.targets.append(next_)
 
         errors = calc_errors(next_, end)
         along = errors[0]
 
+        count = 1
+
         while along < 0:
+            if count > 0:
+                break
             current = StateModel(next_)
             force_vector = self.get_force_vector(start, end, next_)
             force_heading = math.atan2(force_vector[1], force_vector[0])
-            heading_err = current.theta - force_heading
+            heading_err = minimize_angle(current.theta - force_heading)
 
             # pylint: disable=invalid-name
             # v, w, are accurately describing what I want in this case
             w = heading_err/dt
             v = 0.75
 
+            count += 1
             next_ = current.sample_motion_model(v, w, dt)
             self.targets.append(next_)
+
+            
 
             errors = calc_errors(next_, end)
             along = errors[0]
@@ -110,6 +121,7 @@ class ForceLeader(leader.Leader):
 
     def weighted_depart(self, start, end, current):
         depart_vector = self.depart_vector(start, end, current)
+        rospy.loginfo('wdp: '+str(depart_vector[0])+' , '+str(depart_vector[1]))
         w = self.depart_weight(start, end, current)
         return scale(depart_vector, w)
 
@@ -132,10 +144,14 @@ class ForceLeader(leader.Leader):
     # pylint: disable=unused-argument
     # it is being left in to maintain method signature consistency
     def depart_weight(self, start, unused_end, current):
-        return 1.0/dist(start, current)
+        d = dist(start, current)
+        if d < .3:
+            return 1/.3
+        return 1.0/d
 
     def weighted_arrive(self, start, end, current):
         arrive_vector = self.arrive_vector(start, end, current)
+        rospy.loginfo('war: '+str(arrive_vector[0])+' , '+str(arrive_vector[1]))
         w = self.arrive_weight(start, end, current)
         return scale(arrive_vector, w)
 
@@ -153,15 +169,21 @@ class ForceLeader(leader.Leader):
 
         final_direction = axis_direction+heading_correction
 
+        rospy.loginfo('avr: '+str(axis_direction)+' '+str(heading_correction))
+
         return (math.cos(final_direction), math.sin(final_direction), 0,)
 
     # pylint: disable=unused-argument
     # it is being left in to maintain method signature consistency
     def arrive_weight(self, unused_start, end, current):
-        return 1.0/dist(current, end)
+        d = dist(current, end)
+        if d < .3:
+            return 1/.3
+        return 1.0/d
 
     def weighted_traverse(self, start, end, current):
         traverse_vector = self.traverse_vector(start, end, current)
+        rospy.loginfo('wtr: '+str(traverse_vector[0])+' , '+str(traverse_vector[1]))
         w = self.traverse_weight(start, end, current)
         return scale(traverse_vector, w)
 
@@ -190,6 +212,7 @@ class StateModel(object):
         self.w = odom.twist.twist.angular.z
         self.a = 0
         self.alpha = 0
+        self.frame_id = odom.header.frame_id
 
     def sample_motion_model(self, v, w, dt):
         '''
@@ -209,11 +232,13 @@ class StateModel(object):
         if w_hat < .001:
             pass
 
+        rospy.loginfo('smm: '+str(v)+' , '+str(w)+' , '+str(dt))
         x_new = (self.x - v_hat/w_hat*math.sin(self.theta)
             + v_hat/w_hat*math.sin(self.theta+w_hat*dt))
-
+        rospy.loginfo('smm: dx '+str(x_new-self.x))
         y_new = (self.y - v_hat/w_hat*math.cos(self.theta)
             - v_hat/w_hat*math.cos(self.theta+w_hat*dt))
+        rospy.loginfo('smm: dy '+str(y_new-self.y))
 
         theta_new = self.theta + w_hat*dt + y_hat*dt
 
@@ -223,6 +248,7 @@ class StateModel(object):
         new_odom.pose.pose.orientation = heading_to_quaternion(theta_new)
         new_odom.twist.twist.linear.x = v_hat
         new_odom.twist.twist.angular.z = w_hat
+        new_odom.header.frame_id = self.frame_id
 
         return new_odom
 

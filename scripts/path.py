@@ -30,6 +30,7 @@ Copyright 2015 William Baskin
  '''
 
 import rospy
+import math
 from nav_msgs.msg import Odometry
 from drive_stack.srv import Goal, GoalResponse
 
@@ -54,6 +55,7 @@ class Path(object):
     def __init__(self):
 
         self.path = []
+        self.path.append(easy_Odom(x=0, y=0, v=0.0, heading=0.0, frame='odom'))
         self.path.append(easy_Odom(x=0, y=0, v=0.0, heading=0.0, frame='odom'))
         self.path.append(easy_Odom(x=1, y=0, v=0.5, heading=0.0, frame='odom'))
         self.path.append(easy_Odom(x=2, y=0, v=0.5, heading=0.0, frame='odom'))
