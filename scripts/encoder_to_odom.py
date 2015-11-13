@@ -15,21 +15,7 @@ from std_msgs.msg import Float64
 from geometry_msgs.msg import Quaternion
 from snowmower_msgs.msg import EncMsg
 
-def heading_to_quaternion(heading):
-    """
-    Converts a Euler yaw/heading angle to equivalent quaternion
-    input: euler heading in radians
-    output: nav_msgs.msg.Quaternion
-    """
-    # rospy.loginfo('heading out: '+str(heading))
-    quat = tft.quaternion_from_euler(0, 0, heading)
-
-    quaternion = Quaternion()
-    quaternion.x = quat[0]
-    quaternion.y = quat[1]
-    quaternion.z = quat[2]
-    quaternion.w = quat[3]
-    return quaternion
+from utils import heading_to_quaternion
 
 class WheelOdometryGenerator(object):
     """
