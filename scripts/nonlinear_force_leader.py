@@ -83,9 +83,9 @@ class ForceLeader(leader.Leader):
 
             # pylint: disable=invalid-name
             # v, w, are accurately describing what I want in this case
-            w = heading_err/dt
+            w = heading_err/dt*0.75
             rospy.loginfo('cmmd w: '+str(w))
-            v = 0.65
+            v = 0.55
 
             count += 1
             next_ = current.sample_motion_model2(v, w, dt)
@@ -227,7 +227,7 @@ class StateModel(object):
         And does not check acceleration bounds for example
         '''
         accel_max = .1
-        alpha_max = .075
+        alpha_max = 1
 
         delta_v_req = v - self.v
         delta_v_max = accel_max*dt
