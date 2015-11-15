@@ -179,9 +179,13 @@ def off_axis_error(location, goal):
     relative_normal_y = relative_position[1]-relative_along_goal[1]
     relative_normal_z = relative_position[2]-relative_along_goal[2]
 
-    rospy.loginfo('ofxs rn: '+str(relative_normal_x)[0:4]+' '+str(relative_normal_y)[0:4]+' '+str(relative_normal_z)[0:4])
+    sign = 1.0
 
-    return math.sqrt(relative_normal_x*relative_normal_x+
+    crs_product = cross_product(goal_vector, relative_position)
+    if crs_product[2] < 0:
+        sign = -1.0
+
+    return sign*math.sqrt(relative_normal_x*relative_normal_x+
         relative_normal_y*relative_normal_y+
         relative_normal_z*relative_normal_z)
 
@@ -224,6 +228,6 @@ def minimize_angle(delta):
     if delta > math.pi:
         delta = -2.0*math.pi + delta
     if delta < -math.pi:
-        deta = 2.0*math.pi + delta
+        delta = 2.0*math.pi + delta
 
     return delta

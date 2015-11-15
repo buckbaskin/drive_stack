@@ -68,21 +68,24 @@ class ForceLeader(leader.Leader):
         errors = calc_errors(next_, end)
         along = errors[0]
 
-        count = 1
+        count = 2
 
         while along < -0.01 and not rospy.is_shutdown():
-            if count > 100:
+            if count > 200:
                 rospy.loginfo('path overflow')
                 break
             current = StateModel(next_)
             force_vector = self.get_force_vector(start, end, next_)
             force_heading = math.atan2(force_vector[1], force_vector[0])
+            rospy.loginfo('fhead: '+str(force_heading)[0:5])
             heading_err = minimize_angle(force_heading - current.theta)
+            rospy.loginfo('headerr: '+str(heading_err)[0:5])
 
             # pylint: disable=invalid-name
             # v, w, are accurately describing what I want in this case
             w = heading_err/dt
-            v = 0.75
+            rospy.loginfo('cmmd w: '+str(w))
+            v = 0.65
 
             count += 1
             next_ = current.sample_motion_model2(v, w, dt)
@@ -118,13 +121,13 @@ class ForceLeader(leader.Leader):
         # wobs = self.weighted_obstacle(start, end, current)
 
         force = (wdep[0]+warr[0]+wtrv[0], wdep[1]+warr[1]+wtrv[1], 0,)
-
+        rospy.loginfo('final: '+str(force[0])[0:5]+' '+str(force[1])[0:5]+' '+str(force[2])[0:5])
         return force
 
     def weighted_depart(self, start, end, current):
         depart_vector = self.depart_vector(start, end, current)
         w = self.depart_weight(start, end, current)
-        # rospy.loginfo('wdp: '+str(depart_vector[0])[0:4]+' , '+str(depart_vector[1])[0:4]+' , '+str(w)[0:4])
+        rospy.loginfo('wdp: '+str(depart_vector[0])[0:4]+' , '+str(depart_vector[1])[0:4]+' , '+str(w)[0:4])
         return scale(depart_vector, w)
 
     # pylint: disable=unused-argument
@@ -167,11 +170,11 @@ class ForceLeader(leader.Leader):
         # correction to move away from axis
         errors = calc_errors(current, end)
         off_axis = errors[1]
-        heading_correction = minimize_angle(math.atan(-2.0*off_axis))
+        heading_correction = minimize_angle(math.atan(-1.5*off_axis))
 
         final_direction = minimize_angle(axis_direction+heading_correction)
 
-        rospy.loginfo('avr: axis '+str(axis_direction)[0:4]+' corr '+str(heading_correction)[0:4]+' off '+str(off_axis)[0:4])
+        rospy.loginfo('avr: axis '+str(axis_direction)[0:4]+' corr '+str(heading_correction)[0:4]+' off '+str(off_axis)[0:5]+' fina '+str(final_direction)[0:5])
 
         return (math.cos(final_direction), math.sin(final_direction), 0,)
 
@@ -186,7 +189,7 @@ class ForceLeader(leader.Leader):
     def weighted_traverse(self, start, end, current):
         traverse_vector = self.traverse_vector(start, end, current)
         w = self.traverse_weight(start, end, current)
-        # rospy.loginfo('wtr: '+str(traverse_vector[0])[0:4]+' , '+str(traverse_vector[1])[0:4]+' , '+str(w)[0:4])
+        rospy.loginfo('wtr: '+str(traverse_vector[0])[0:4]+' , '+str(traverse_vector[1])[0:4]+' , '+str(w)[0:4])
         return scale(traverse_vector, w)
 
     # pylint: disable=unused-argument
@@ -224,7 +227,7 @@ class StateModel(object):
         And does not check acceleration bounds for example
         '''
         accel_max = .1
-        alpha_max = .05
+        alpha_max = .075
 
         delta_v_req = v - self.v
         delta_v_max = accel_max*dt
