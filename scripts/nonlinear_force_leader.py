@@ -26,9 +26,16 @@ class ForceLeader(leader.Leader):
         """
         Path creation for node
         """
-        self.generate_next_path()
+        end = self.path_goal().goal
+        start = self.path_start().goal
+        self.common_path_gen(start, end)
 
     def generate_next_path(self):
+        end = self.path_next().goal
+        start = self.path_start().goal
+        self.common_path_gen(start, end)
+
+    def common_path_gen(self, start, end):
         """
         generate a new path, either forwards or backwards (rvs == True)
         """
