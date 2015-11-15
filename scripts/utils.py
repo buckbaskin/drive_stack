@@ -1,3 +1,4 @@
+import rospy
 import math
 
 from nav_msgs.msg import Odometry
@@ -147,6 +148,7 @@ def off_axis_error(location, goal):
     example use:
     see calc_errors above
     """
+    # TODO(buckbaskin): assign a sign convention to off axis value
 
     relative_position_x = (location.pose.pose.position.x -
         goal.pose.pose.position.x)
@@ -176,6 +178,8 @@ def off_axis_error(location, goal):
     relative_normal_x = relative_position[0]-relative_along_goal[0]
     relative_normal_y = relative_position[1]-relative_along_goal[1]
     relative_normal_z = relative_position[2]-relative_along_goal[2]
+
+    rospy.loginfo('ofxs rn: '+str(relative_normal_x)[0:4]+' '+str(relative_normal_y)[0:4]+' '+str(relative_normal_z)[0:4])
 
     return math.sqrt(relative_normal_x*relative_normal_x+
         relative_normal_y*relative_normal_y+
@@ -212,13 +216,14 @@ def easy_Odom(x, y, heading=0.0, v=0.0, w=0.0, frame='odom'):
     return odom
 
 def minimize_angle(delta):
-    while (delta > 2*math.pi):
-        delta = delta - 2*math.pi
-    while (delta < 2*math.pi):
-        delta = delta + 2*math.pi
+    while (delta > 2.0*math.pi):
+        delta = delta - 2.0*math.pi
+
+    while (delta < -2.0*math.pi):
+        delta = delta + 2.0*math.pi
     if delta > math.pi:
-        delta = -2*math.pi + delta
-    if delta < math.pi:
-        deta = 2*math.pi + delta
+        delta = -2.0*math.pi + delta
+    if delta < -math.pi:
+        deta = 2.0*math.pi + delta
 
     return delta

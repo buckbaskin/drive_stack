@@ -60,7 +60,7 @@ class ForceLeader(leader.Leader):
         # possibly do vel profile based on distance, slow down proportional to
         #  heading error relative to force field
 
-        rospy.loginfo('gnxt: '+str(force_heading)+' ... '+str(current.theta))
+        # rospy.loginfo('gnxt: '+str(force_heading)+' ... '+str(current.theta))
 
         next_ = current.sample_motion_model2(v, w, dt)
         self.targets.append(next_)
@@ -70,13 +70,14 @@ class ForceLeader(leader.Leader):
 
         count = 1
 
-        while along < -0.01:
-            # if count > 10:
-            #     break
+        while along < -0.01 and not rospy.is_shutdown():
+            if count > 100:
+                rospy.loginfo('path overflow')
+                break
             current = StateModel(next_)
             force_vector = self.get_force_vector(start, end, next_)
             force_heading = math.atan2(force_vector[1], force_vector[0])
-            heading_err = minimize_angle(current.theta - force_heading)
+            heading_err = minimize_angle(force_heading - current.theta)
 
             # pylint: disable=invalid-name
             # v, w, are accurately describing what I want in this case
@@ -91,7 +92,7 @@ class ForceLeader(leader.Leader):
 
             errors = calc_errors(next_, end)
             along = errors[0]
-            rospy.loginfo('alongher alenghi alphabet: '+str(along))
+            # rospy.loginfo('alongher alenghi alphabet: '+str(along))
 
         self.index = 0
 
@@ -122,8 +123,8 @@ class ForceLeader(leader.Leader):
 
     def weighted_depart(self, start, end, current):
         depart_vector = self.depart_vector(start, end, current)
-        rospy.loginfo('wdp: '+str(depart_vector[0])+' , '+str(depart_vector[1]))
         w = self.depart_weight(start, end, current)
+        # rospy.loginfo('wdp: '+str(depart_vector[0])[0:4]+' , '+str(depart_vector[1])[0:4]+' , '+str(w)[0:4])
         return scale(depart_vector, w)
 
     # pylint: disable=unused-argument
@@ -147,13 +148,13 @@ class ForceLeader(leader.Leader):
     def depart_weight(self, start, unused_end, current):
         d = dist(start, current)
         if d < .3:
-            return 1/.3
-        return 1.0/d
+            d = .3
+        return 2.0/d
 
     def weighted_arrive(self, start, end, current):
         arrive_vector = self.arrive_vector(start, end, current)
-        rospy.loginfo('war: '+str(arrive_vector[0])+' , '+str(arrive_vector[1]))
         w = self.arrive_weight(start, end, current)
+        rospy.loginfo('war: '+str(arrive_vector[0])[0:4]+' , '+str(arrive_vector[1])[0:4]+' , '+str(w)[0:4])
         return scale(arrive_vector, w)
 
     # pylint: disable=unused-argument
@@ -161,16 +162,16 @@ class ForceLeader(leader.Leader):
     @unit # forces a unit vector to be returned, scaled by weight
     def arrive_vector(self, unused_start, end, current):
         # axis direction
-        axis_direction = quaternion_to_heading(end.pose.pose.orientation)
+        axis_direction = minimize_angle(quaternion_to_heading(end.pose.pose.orientation))
 
         # correction to move away from axis
         errors = calc_errors(current, end)
         off_axis = errors[1]
-        heading_correction = math.atan(-2.0*off_axis)
+        heading_correction = minimize_angle(math.atan(-2.0*off_axis))
 
-        final_direction = axis_direction+heading_correction
+        final_direction = minimize_angle(axis_direction+heading_correction)
 
-        rospy.loginfo('avr: '+str(axis_direction)+' '+str(heading_correction))
+        rospy.loginfo('avr: axis '+str(axis_direction)[0:4]+' corr '+str(heading_correction)[0:4]+' off '+str(off_axis)[0:4])
 
         return (math.cos(final_direction), math.sin(final_direction), 0,)
 
@@ -179,13 +180,13 @@ class ForceLeader(leader.Leader):
     def arrive_weight(self, unused_start, end, current):
         d = dist(current, end)
         if d < .3:
-            return 1/.3
-        return 1.0/d
+            d = .3
+        return 2.0/d
 
     def weighted_traverse(self, start, end, current):
         traverse_vector = self.traverse_vector(start, end, current)
-        rospy.loginfo('wtr: '+str(traverse_vector[0])+' , '+str(traverse_vector[1]))
         w = self.traverse_weight(start, end, current)
+        # rospy.loginfo('wtr: '+str(traverse_vector[0])[0:4]+' , '+str(traverse_vector[1])[0:4]+' , '+str(w)[0:4])
         return scale(traverse_vector, w)
 
     # pylint: disable=unused-argument
@@ -246,7 +247,7 @@ class StateModel(object):
 
         ds = v_avg*dt
 
-        rospy.loginfo('smm2: ds: '+str(ds))
+        # rospy.loginfo('smm2: ds: '+str(ds))
 
         delta_w_req = w - self.w
         delta_w_max = alpha_max*dt
@@ -296,17 +297,17 @@ class StateModel(object):
         y_hat = self.sample_normal(noise[4]*v+noise[5]*w)
 
         if w_hat < .001:
-            rospy.loginfo('what is too small')
+            # rospy.loginfo('what is too small')
             x_new = self.x + v_hat*math.cos(self.theta)
             y_new = self.y + v_hat*math.sin(self.theta)
         else:
-            rospy.loginfo('smm: '+str(v)+' , '+str(w)+' , '+str(dt))
+            # rospy.loginfo('smm: '+str(v)+' , '+str(w)+' , '+str(dt))
             x_new = (self.x - v_hat/w_hat*math.sin(self.theta)
                 + v_hat/w_hat*math.sin(self.theta+w_hat*dt))
-            rospy.loginfo('smm: dx '+str(x_new-self.x))
+            # rospy.loginfo('smm: dx '+str(x_new-self.x))
             y_new = (self.y - v_hat/w_hat*math.cos(self.theta)
                 - v_hat/w_hat*math.cos(self.theta+w_hat*dt))
-            rospy.loginfo('smm: dy '+str(y_new-self.y))
+            # rospy.loginfo('smm: dy '+str(y_new-self.y))
 
         theta_new = self.theta + w_hat*dt + y_hat*dt
 
