@@ -26,20 +26,15 @@ class ForceLeader(leader.Leader):
         """
         Path creation for node
         """
-        self.generate_next_path(rvs=False)
+        self.generate_next_path()
 
-    def generate_next_path(self, rvs=False):
+    def generate_next_path(self):
         """
         generate a new path, either forwards or backwards (rvs == True)
         """
-        if not rvs:
-            end = self.path_next().goal
-            start = self.path_start().goal
-        else:
-            # move back one segment
-            start = self.path_back().goal
-            end = start.path_goal().goal
-
+        end = self.path_next().goal
+        start = self.path_start().goal
+        
         self.targets = []
         self.targets.append(start)
 
@@ -140,7 +135,7 @@ class ForceLeader(leader.Leader):
         # correction to move away from axis
         errors = calc_errors(current, start)
         off_axis = errors[1]
-        heading_correction = math.atan(2.0*off_axis)
+        heading_correction = math.atan(1.5*off_axis)
 
         final_direction = axis_direction+heading_correction
 

@@ -57,19 +57,12 @@ class ExampleLeader(leader.Leader):
 
         self.index = 0
 
-    def generate_next_path(self, rvs):
+    def generate_next_path(self):
         """
         generate a new path, either forwards or backwards (rvs == True)
         """
-        # if rvs: move to the previous segement on the path, starting at the end
-        # else: generate a path to the next Path goal
-        if not rvs:
-            end = self.path_next().goal
-            start = self.path_start().goal
-        else:
-            # move back one segment
-            start = self.path_back().goal
-            end = start.path_goal().goal
+        end = self.path_next().goal
+        start = self.path_start().goal
 
         self.targets = []
         self.targets.append(start)

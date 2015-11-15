@@ -84,7 +84,7 @@ class Leader(object):
                 self.index = 0
             return self.goal_callback()
         else:
-            self.generate_next_path(False) # don't reverse
+            self.generate_next_path()
             return self.goal_callback()
 
 
@@ -103,9 +103,6 @@ class Leader(object):
             self.index = len(self.targets) - 2
             if self.index < 0:
                 self.index = 0
-            return self.goal_callback()
-        else:
-            self.generate_next_path(True) # do reverse next path
             return self.goal_callback()
 
     def next_rolling_pub(self):
@@ -220,20 +217,13 @@ class Leader(object):
 
         self.index = 0
 
-    def generate_next_path(self, rvs):
+    def generate_next_path(self):
         """
         generate a new path, either forwards or backwards (rvs == True)
         """
-        # if rvs: move to the previous segement on the path, starting at the end
-        # else: generate a path to the next Path goal
-        if not rvs:
-            end = self.path_next()
-            start = self.path_start()
-        else:
-            # move back one segment
-            start = self.path_back()
-            end = start.path_goal()
-
+        end = self.path_next()
+        start = self.path_start()
+        
         self.targets = []
         self.targets.append(start)
 
