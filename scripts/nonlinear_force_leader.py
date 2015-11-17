@@ -9,6 +9,8 @@ from utils import heading_to_quaternion, quaternion_to_heading
 from utils import calc_errors, dist, scale, minimize_angle
 from utils import unit as to_unit_tuple
 
+from tf import transformations as tft
+
 def unit(function):
     def modded_function(*args, **varargs):
         val = function(*args, **varargs)
@@ -50,22 +52,9 @@ class ForceLeader(leader.Leader):
 
         dt = .1
 
-        start.header.frame_id = 'odom'
 
-        current = StateModel(start)
-        force_vector = self.get_force_vector(start, end, start)
-        force_heading = math.atan2(force_vector[1], force_vector[0])
-        heading_err = current.theta - force_heading
-        w = heading_err/dt
-        v = 0.5 # TODO(buckbaskin): calculate something smart based on vel
-        # profile from start to end
-        # possibly do vel profile based on distance, slow down proportional to
-        #  heading error relative to force field
 
-        # rospy.loginfo('gnxt: '+str(force_heading)+' ... '+str(current.theta))
-
-        next_ = current.sample_motion_model2(v, w, dt)
-        self.targets.append(next_)
+        next_ = start
 
         errors = calc_errors(next_, end)
         along = errors[0]
@@ -86,11 +75,19 @@ class ForceLeader(leader.Leader):
             # pylint: disable=invalid-name
             # v, w, are accurately describing what I want in this case
             w = heading_err/dt*0.75
-            rospy.loginfo('cmmd w: '+str(w))
-            v = 0.55
+            v = 0.55        
+            # TODO(buckbaskin): calculate something smart based on vel
+            # profile from start to end
+            # possibly do vel profile based on distance, slow down proportional to
+            #  heading error relative to force field
+
+            # rospy.loginfo('gnxt: '+str(force_heading)+' ... '+str(current.theta))
 
             count += 1
             next_ = current.sample_motion_model2(v, w, dt)
+
+            odom_next = self.convert_to_odom(next_)
+
             self.targets.append(next_)
 
             
@@ -209,6 +206,42 @@ class ForceLeader(leader.Leader):
         #  be of equal weight to the traverse weight. More indicates a greater
         #  requested priority.
         return 1.0
+
+    def convert_to_odom(self, data):
+        if data.header.frame_id == 'odom':
+            return data
+        else:
+            listener = tf.TransformListener()
+            try:
+                (trans, rot) = listener.lookupTransform('/map', '/odom', rospy.Time(0))
+                return self.odom_transform_2d(data, trans, rot)
+
+            except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
+                return data
+
+    def odom_transform_2d(self, data, new_frame, trans, rot):
+        # NOTES: only in 2d rotation
+        # also, it removes covariance, etc information
+        odom_new = Odometry()
+        odom_new.header = data.header
+        odom_new.header.frame_id = new_frame
+
+        odom_new.pose.pose.position.x = data.pose.pose.position.x + trans[0]
+        odom_new.pose.pose.position.y = data.pose.pose.position.y + trans[1]
+        odom_new.pose.pose.position.z = data.pose.pose.position.z + trans[2]
+        odom_new.pose.pose.orientation = tft.quaternion_multiply(data.pose.pose.orientation, rot)
+
+        heading_change = quaternion_to_heading(rot)
+
+        odom_new.twist.twist.linear.x = data.twist.twist.linear.x*math.cos(heading_change) - data.twist.twist.linear.y*math.sin(heading_change)
+        odom_new.twist.twist.linear.y = data.twist.twist.linear.y*math.cos(heading_change) + data.twist.twist.linear.x*math.sin(heading_change)
+        odom_new.twist.twist.linear.z = 0
+
+        odom_new.twist.twist.angular.x = 0
+        odom_new.twist.twist.angular.y = 0
+        odom_new.twist.twist.angular.z = data.twist.twist.angular.z
+
+        return odom_new
 
 class StateModel(object):
     def __init__(self, odom):
