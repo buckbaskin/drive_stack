@@ -21,6 +21,7 @@ class ExampleLeader(leader.Leader):
         """
         Path creation for node
         """
+        rospy.loginfo('generating generate_initial_path')
         # Note: this is called once during node initialization
         end = self.path_goal().goal # Odometry
         start = self.path_start().goal # Odometry
@@ -44,7 +45,9 @@ class ExampleLeader(leader.Leader):
         distance = math.sqrt(dx*dx+dy*dy)
         steps = math.floor(distance/(des_speed*dt))
 
+        rospy.loginfo('steps generated? '+str(steps))
         for i in range(1, int(steps)+1):
+            rospy.loginfo('a;sdf '+str(i))
             odo = Odometry()
             odo.header.frame_id = 'odom'
             odo.pose.pose.position = Point(x=start.pose.pose.position.x+i*step_x, y=start.pose.pose.position.y+i*step_y)
