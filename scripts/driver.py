@@ -91,11 +91,11 @@ class Driver(object):
         Start the pub/sub portion of the ROS node
         """
         rospy.init_node('default_driver')
-        self.position = rospy.Subscriber('/odom', Odometry, self.process_odom)
+        self.position = rospy.Subscriber('/odom', Odometry, self.process_position)
         self.cmd_vel = rospy.Publisher('/cmd_vel', Twist, queue_size=1)
         self.silent_cmd = rospy.Publisher('/silent_cmd', Twist, queue_size=1)
 
-    def process_odom(self, odom):
+    def process_position(self, odom):
         """
         Takes in a new odom/best position estimate
         sends out a new control command based on this best estimate of location

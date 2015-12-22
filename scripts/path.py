@@ -27,7 +27,7 @@ Copyright 2015 William Baskin
  srv/path/start - returns starting goal
  srv/path/back - moves path to previous goal, returns that goal
  msg/path/current - publishes current goal
- '''
+'''
 
 import rospy
 import math
@@ -55,10 +55,10 @@ class Path(object):
     def __init__(self):
 
         self.path = []
-        # self.path.append(easy_Odom(x=0, y=0, v=0.0, heading=0.0, frame='odom'))
-        self.path.append(easy_Odom(x=0, y=0, v=0.0, heading=0.0, frame='odom'))
-        self.path.append(easy_Odom(x=2, y=-1, v=0.5, heading=0.0, frame='odom'))
-        self.path.append(easy_Odom(x=4, y=0, v=0.5, heading=0.0, frame='odom'))
+        # self.path.append(easy_Odom(x=0, y=0, v=0.0, heading=0.0, frame='map'))
+        self.path.append(easy_Odom(x=0, y=0, v=0.0, heading=0.0, frame='map'))
+        self.path.append(easy_Odom(x=2, y=-1, v=0.5, heading=0.0, frame='map'))
+        self.path.append(easy_Odom(x=4, y=0, v=0.5, heading=0.0, frame='map'))
         self.index = 0
 
         self.rolling_index = -1

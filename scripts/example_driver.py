@@ -3,7 +3,7 @@
 Example Driver
 Example implementation of the driver
 
-process_odom is the key method here
+process_position is the key method here
 """
 
 import driver
@@ -34,7 +34,7 @@ class ExampleDriver(driver.Driver):
         super(ExampleDriver, self).__init__()
         self.last_odom = None
 
-    def process_odom(self, odom):
+    def process_position(self, odom):
         """
         Converts new best estimate of position to command
         Based on theory from:
