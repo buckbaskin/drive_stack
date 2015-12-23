@@ -151,6 +151,7 @@ class Path(object):
         """
         self.current.publish(self.goal_callback("This").goal)
         self.start_pub.publish(self.start_callback().goal)
+        # print 'rolling pub'
         self.rolling.publish(self.next_rolling_pub())
 
     def run_server(self):
