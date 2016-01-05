@@ -232,13 +232,11 @@ class Driver(object):
             location.pose.pose.position.x)
         relative_position_y = (goal.pose.pose.position.y -
             location.pose.pose.position.y)
-        relative_position_z = (goal.pose.pose.position.z -
-            location.pose.pose.position.z)
-
+        
         # relative position of the best estimate position and the goal
         # vector points from the goal to the location
         relative_position = (relative_position_x, relative_position_y,
-            relative_position_z)
+            0.0)
 
         goal_heading = quaternion_to_heading(goal.pose.pose.orientation)
         goal_vector_x = math.cos(goal_heading)
@@ -247,19 +245,22 @@ class Driver(object):
         # vector in the direction of the goal heading, axis of desired motion
         goal_vector = (goal_vector_x, goal_vector_y, 0.0)
 
-        try:
-            relative_along_goal = scale(unit(relative_position),
-                dot_product(relative_position, goal_vector))
-        except ZeroDivisionError:
-            relative_along_goal = (0,0,0,)
+        along_axis_error = self.along_axis_error(location, goal)
 
-        relative_normal_x = relative_position[0]-relative_along_goal[0]
-        relative_normal_y = relative_position[1]-relative_along_goal[1]
-        relative_normal_z = relative_position[2]-relative_along_goal[2]
+        along_axis_vec = scale(unit(goal_vector), along_axis_error)
 
-        return math.sqrt(relative_normal_x*relative_normal_x+
-            relative_normal_y*relative_normal_y+
-            relative_normal_z*relative_normal_z)
+        new_rel_x = relative_position_x - along_axis_vec[0]
+        new_rel_y = relative_position_y - along_axis_vec[1]
+        
+        new_rel_vec = (new_rel_x, new_rel_y, 0.0)
+
+        error_magnitude = math.sqrt(new_rel_x*new_rel_x + 
+            new_rel_y*new_rel_y)
+
+        if cross_product(goal_vector, new_rel_vec)[2] >= 0.0:
+            return error_magnitude
+        else:
+            return -1.0*error_magnitude
 
 
     def heading_error(self, location, goal):
