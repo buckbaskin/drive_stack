@@ -247,8 +247,11 @@ class Driver(object):
         # vector in the direction of the goal heading, axis of desired motion
         goal_vector = (goal_vector_x, goal_vector_y, 0.0)
 
-        relative_along_goal = scale(unit(relative_position),
-            dot_product(relative_position, goal_vector))
+        try:
+            relative_along_goal = scale(unit(relative_position),
+                dot_product(relative_position, goal_vector))
+        except ZeroDivisionError:
+            relative_along_goal = (0,0,0,)
 
         relative_normal_x = relative_position[0]-relative_along_goal[0]
         relative_normal_y = relative_position[1]-relative_along_goal[1]
