@@ -7,6 +7,10 @@ process_position is the key method here
 """
 
 import driver
+import rospy
+
+import math
+import sys
 # from driver import heading_to_quaternion, quaternion_to_heading
 # from driver import dot_product, cross_product, scale, unit
 # import rospy
@@ -83,24 +87,38 @@ class ExampleDriver(driver.Driver):
 
         new_kurvature = kurvature+delta_kurv_discrete
         new_radius = self.radius_from_kurvature(new_kurvature)
-
+        
         # match speed to goal, with adjustment for position error
         linear_vel = next_goal.twist.twist.linear.x
         linear_vel += -0.5*along
 
         linear_vel = self.check_linear_limits(odom, linear_vel)
-
         # calculate angular velocity
-        angular_vel = linear_vel / new_radius
+        if new_radius > 10000:
+            angular_vel = 0
+        else:
+            angular_vel = linear_vel / new_radius
 
         angular_vel = self.check_angular_limits(odom, angular_vel)
         # reset linear_vel based on new (lower, limited) angular vel
-        linear_vel = angular_vel * new_radius
-
+        if new_radius > 10000 or angular_vel < .0001:
+            pass
+        else:
+            linear_vel = angular_vel * new_radius
+        
         # linear and angular velocity are now within dx/dt, d2x/dt2 limits
         twist_out = Twist()
         twist_out.linear.x = linear_vel
         twist_out.angular.z = angular_vel
+        rospy.loginfo('lin: '+str(linear_vel)+' ang: '+str(angular_vel))
+
+        if math.isnan(linear_vel) or math.isnan(angular_vel):
+            linear_vel = 0
+            angular_vel = 0
+            twist_out.linear.x = linear_vel
+            twist_out.angular.z = angular_vel
+            self.cmd_vel.publish(twist_out)
+            sys.exit(0)
         self.cmd_vel.publish(twist_out)
 
     def calc_old_radius(self, linear_vel, angular_vel):
@@ -127,6 +145,7 @@ class ExampleDriver(driver.Driver):
         """
         Calculate the instant radius from the kurvature
         """
+        rospy.loginfo('radius_from_kurvature')
         if k < .001:
             new_radius = float("inf")
         else:
