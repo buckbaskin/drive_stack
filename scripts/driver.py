@@ -228,12 +228,12 @@ class Driver(object):
         example use:
         see calc_errors above
         """
-        relative_position_x = (location.pose.pose.position.x -
-            goal.pose.pose.position.x)
-        relative_position_y = (location.pose.pose.position.y -
-            goal.pose.pose.position.y)
-        relative_position_z = (location.pose.pose.position.z -
-            goal.pose.pose.position.z)
+        relative_position_x = (goal.pose.pose.position.x -
+            location.pose.pose.position.x)
+        relative_position_y = (goal.pose.pose.position.y -
+            location.pose.pose.position.y)
+        relative_position_z = (goal.pose.pose.position.z -
+            location.pose.pose.position.z)
 
         # relative position of the best estimate position and the goal
         # vector points from the goal to the location
