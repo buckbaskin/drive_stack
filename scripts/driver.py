@@ -91,7 +91,7 @@ class Driver(object):
         Start the pub/sub portion of the ROS node
         """
         rospy.init_node('default_driver')
-        self.position = rospy.Subscriber('/odom', Odometry, self.process_position)
+        self.position = rospy.Subscriber('/base_pose_ground_truth', Odometry, self.process_position)
         self.cmd_vel = rospy.Publisher('/cmd_vel', Twist, queue_size=1)
         self.silent_cmd = rospy.Publisher('/silent_cmd', Twist, queue_size=1)
 
@@ -149,7 +149,7 @@ class Driver(object):
         twist_out = Twist()
         twist_out.linear.x = linear_vel
         twist_out.angular.z = angular_vel
-        if self.silent:
+        if self.silent or True:
             self.silent_cmd.publish(twist_out)
         else:
             self.cmd_vel.publish(twist_out)
@@ -171,6 +171,7 @@ class Driver(object):
         along = self.along_axis_error(location, goal)
         off = self.off_axis_error(location, goal)
         heading = self.heading_error(location, goal)
+        rospy.loginfo('a: %d o: %d h: %d' % (along, off, heading,))
         return (along, off, heading,)
 
     # pylint: disable=no-self-use

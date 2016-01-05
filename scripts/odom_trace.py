@@ -31,7 +31,7 @@ class OdomTrace(object):
         rospy.loginfo('Trace Running.')
         self.rcvd = []
         self.index = 0
-        self.odom = rospy.Subscriber('/odom', Odometry, self.process_position)
+        self.odom = rospy.Subscriber('/base_pose_ground_truth', Odometry, self.process_position)
         self.replay = rospy.Publisher('/replay', Odometry, queue_size=1)
         sleep_rate = rospy.Rate(50)
         while not rospy.is_shutdown():

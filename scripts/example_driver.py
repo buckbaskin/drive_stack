@@ -26,9 +26,9 @@ class ExampleDriver(driver.Driver):
     b = 3*pow(k, 2)
     c = pow(k, 3)
 
-    max_v = 1.0
+    max_v = 0.1
     max_accel = .05
-    max_omega = 0.5
+    max_omega = 0.1
     max_alpha = .05
 
     # pylint: disable=no-self-use
@@ -119,7 +119,11 @@ class ExampleDriver(driver.Driver):
             twist_out.angular.z = angular_vel
             self.cmd_vel.publish(twist_out)
             sys.exit(0)
-        self.cmd_vel.publish(twist_out)
+
+        if self.silent:
+            self.silent_cmd.publish(twist_out)
+        else:
+            self.cmd_vel.publish(twist_out)
 
     def calc_old_radius(self, linear_vel, angular_vel):
         """
@@ -145,7 +149,7 @@ class ExampleDriver(driver.Driver):
         """
         Calculate the instant radius from the kurvature
         """
-        rospy.loginfo('radius_from_kurvature')
+        # rospy.loginfo('radius_from_kurvature')
         if k < .001:
             new_radius = float("inf")
         else:
