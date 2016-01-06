@@ -277,7 +277,7 @@ class Driver(object):
         """
         loc_head = quaternion_to_heading(location.pose.pose.orientation)
         goal_head = quaternion_to_heading(goal.pose.pose.orientation)
-        return loc_head - goal_head
+        return goal_head - loc_head
 
     def dist(self, odom1, odom2):
         """

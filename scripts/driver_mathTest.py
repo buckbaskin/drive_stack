@@ -135,5 +135,21 @@ class TestDriverCalculations(unittest.TestCase):
         self.assertEqual(off, 0)
         self.assertEqual(heading, 0)
 
+    def test_heading_plus(self):
+        location = easy_Odom(x=0, y=0, v=0.0, heading=0.0, frame='map')
+        goal = easy_Odom(x=0.0, y=0.0, v=0.0, heading=1.0, frame='map')
+        along, off, heading = self.driver_obj.calc_errors(location=location, goal=goal)
+        self.assertEqual(along, 0.0)
+        self.assertEqual(off, 0.0)
+        self.assertEqual(heading, 1.0)
+
+    def test_heading_minus(self):
+        location = easy_Odom(x=0, y=0, v=0.0, heading=0.0, frame='map')
+        goal = easy_Odom(x=0.0, y=0.0, v=0.0, heading=-1.0, frame='map')
+        along, off, heading = self.driver_obj.calc_errors(location=location, goal=goal)
+        self.assertEqual(along, 0.0)
+        self.assertEqual(off, 0.0)
+        self.assertEqual(heading, -1.0)
+
 if __name__ == '__main__':
     unittest.main()
