@@ -81,5 +81,59 @@ class TestDriverCalculations(unittest.TestCase):
         self.assertEqual(off, 0)
         self.assertEqual(heading, 0)
 
+    def test_aheady_target1(self):
+        # print('test_ahead_target')
+        location = easy_Odom(x=0, y=0, v=0.0, heading=1.57079632679, frame='map')
+        goal = easy_Odom(x=0.0, y=1.0, v=0.0, heading=1.57079632679, frame='map')
+        along, off, heading = self.driver_obj.calc_errors(location=location, goal=goal)
+        self.assertEqual(along, 1.0)
+        self.assertEqual(off, 0)
+        self.assertEqual(heading, 0)
+
+    def test_aheady_target2(self):
+        # print('test_ahead_target')
+        location = easy_Odom(x=0, y=0, v=0.0, heading=1.57079632679, frame='map')
+        goal = easy_Odom(x=0.0, y=2.0, v=0.0, heading=1.57079632679, frame='map')
+        along, off, heading = self.driver_obj.calc_errors(location=location, goal=goal)
+        self.assertEqual(along, 2.0)
+        self.assertEqual(off, 0)
+        self.assertEqual(heading, 0)
+
+    def test_aheady_target3(self):
+        # print('test_ahead_target')
+        location = easy_Odom(x=0, y=0, v=0.0, heading=1.57079632679, frame='map')
+        goal = easy_Odom(x=0.0, y=3.0, v=0.0, heading=1.57079632679, frame='map')
+        along, off, heading = self.driver_obj.calc_errors(location=location, goal=goal)
+        self.assertEqual(along, 3.0)
+        self.assertEqual(off, 0)
+        self.assertEqual(heading, 0)
+
+    def test_behindy_target1(self):
+        # print('test_behind_target')
+        location = easy_Odom(x=0, y=0, v=0.0, heading=1.57079632679, frame='map')
+        goal = easy_Odom(x=0.0, y=-1.0, v=0.0, heading=1.57079632679, frame='map')
+        along, off, heading = self.driver_obj.calc_errors(location=location, goal=goal)
+        self.assertEqual(along, -1.0)
+        self.assertEqual(off, 0)
+        self.assertEqual(heading, 0)
+
+    def test_behindy_target2(self):
+        # print('test_behind_target')
+        location = easy_Odom(x=0, y=0, v=0.0, heading=1.57079632679, frame='map')
+        goal = easy_Odom(x=0.0, y=-2.0, v=0.0, heading=1.57079632679, frame='map')
+        along, off, heading = self.driver_obj.calc_errors(location=location, goal=goal)
+        self.assertEqual(along, -2.0)
+        self.assertEqual(off, 0)
+        self.assertEqual(heading, 0)
+
+    def test_behindy_target3(self):
+        # print('test_behind_target')
+        location = easy_Odom(x=0, y=0, v=0.0, heading=1.57079632679, frame='map')
+        goal = easy_Odom(x=0.0, y=-3.0, v=0.0, heading=1.57079632679, frame='map')
+        along, off, heading = self.driver_obj.calc_errors(location=location, goal=goal)
+        self.assertEqual(along, -3.0)
+        self.assertEqual(off, 0)
+        self.assertEqual(heading, 0)
+
 if __name__ == '__main__':
     unittest.main()

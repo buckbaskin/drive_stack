@@ -208,7 +208,12 @@ class Driver(object):
         # vector in the direction of the goal heading, axis of desired motion
         goal_vector = (goal_vector_x, goal_vector_y, 0.0)
 
-        return dot_product(relative_position, goal_vector)
+        val = dot_product(relative_position, goal_vector)
+
+        if abs(val) < .0001:
+            return 0.0
+
+        return val
 
     def off_axis_error(self, location, goal):
         """
@@ -256,6 +261,9 @@ class Driver(object):
 
         error_magnitude = math.sqrt(new_rel_x*new_rel_x + 
             new_rel_y*new_rel_y)
+
+        if error_magnitude < .0001:
+            return 0.0
 
         if cross_product(goal_vector, new_rel_vec)[2] >= 0.0:
             return error_magnitude
