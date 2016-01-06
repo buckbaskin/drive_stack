@@ -231,3 +231,6 @@ def minimize_angle(delta):
         delta = 2.0*math.pi + delta
 
     return delta
+
+def is_close(a, b):
+    return abs(a-b) < .0001
