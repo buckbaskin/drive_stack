@@ -47,6 +47,10 @@ class ExampleDriver(driver.Driver):
         in International Conference on Robotics and Automation,
         Albuquerque, NM, 1997, pp.2908-2913
         """
+        ## TODO check:
+        odom.header.frame_id = 'map'
+        self.last_pose_data.publish(odom)
+
         if self.last_odom is None:
             self.last_odom = odom
 
@@ -61,6 +65,7 @@ class ExampleDriver(driver.Driver):
 
         # errors along axis "x", off axis "y", heading "theta"
         along, off, heading = self.calc_errors(odom, next_goal)
+        print('aoh', along, off, heading)
 
         # d(kurvature)/ds = -a(kurvature) - b(heading_error) - c(off_error)
         # kurvature is defined as: 1/instant radius
@@ -77,6 +82,8 @@ class ExampleDriver(driver.Driver):
         # implement the math
         last_radius = self.calc_old_radius(odom.twist.twist.linear.x,
             odom.twist.twist.angular.z)
+
+        
 
         kurvature = self.kurvature_from_radius(last_radius)
 

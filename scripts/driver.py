@@ -53,6 +53,8 @@ class Driver(object):
         self.cmd_vel = None
         self.silent_cmd = None
         self.position = None
+        self.last_pose_data = None
+
         # ROS services
         self.lead_back = None
         self.lead_start = None
@@ -75,6 +77,10 @@ class Driver(object):
         #  self.back = rospy.Service('/lead/back', Goal, back_callback)
         """
 
+        rospy.init_node('default_driver')
+
+        rospy.loginfo('waiting for services')
+
         rospy.wait_for_service('/lead/goal')
         rospy.wait_for_service('/lead/next')
         rospy.wait_for_service('/lead/start')
@@ -90,8 +96,8 @@ class Driver(object):
         """
         Start the pub/sub portion of the ROS node
         """
-        rospy.init_node('default_driver')
         self.position = rospy.Subscriber('/base_pose_ground_truth', Odometry, self.process_position)
+        self.last_pose_data = rospy.Publisher('/last_pose_data', Odometry, queue_size=1)
         self.cmd_vel = rospy.Publisher('/cmd_vel', Twist, queue_size=1)
         self.silent_cmd = rospy.Publisher('/silent_cmd', Twist, queue_size=1)
 
@@ -102,6 +108,11 @@ class Driver(object):
         Note: this may not work effectively for control. It is an example
         implementation at best.
         """
+        ## TODO check:
+        odom.header.frame_id = 'map'
+        rospy.loginfo('publishing the thingamajig')
+        self.last_pose_data.publish(odom)
+
         next_goal = self.lead_goal().goal
         if self.dist(next_goal, odom) < .04:
             # if you are .04 m or less from the goal, move forward

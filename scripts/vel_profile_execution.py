@@ -142,9 +142,11 @@ def main_circle(radius):
 
 if __name__ == '__main__':
     ## there and back again
-    main_straight() # runs forward 9ft
+    # main_straight() # runs forward 9ft
     # main_turn_in_place() # turns in place 180 degrees
     # main_straight()
     # main_turn_in_place()
-    # radius = -0.5 # meters
-    # main_circle(radius) # drives one 360 degree circle at the given radius
+    radius = -0.5 # meters
+    main_circle(radius) # drives one 360 degree circle at the given radius
+    while(not rospy.is_shutdown()):
+        main_circle(radius)
