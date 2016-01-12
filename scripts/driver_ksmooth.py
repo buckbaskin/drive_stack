@@ -37,6 +37,7 @@ class ExampleDriver(driver.Driver):
     def __init__(self):
         super(ExampleDriver, self).__init__()
         self.last_odom = None
+        self.silent = True
 
     def process_position(self, odom):
         """
@@ -82,8 +83,7 @@ class ExampleDriver(driver.Driver):
         # implement the math
         last_radius = self.calc_old_radius(odom.twist.twist.linear.x,
             odom.twist.twist.angular.z)
-
-        
+        print('last_radius ' + str(last_radius))
 
         kurvature = self.kurvature_from_radius(last_radius)
 
@@ -136,10 +136,12 @@ class ExampleDriver(driver.Driver):
         """
         Calculate an instant radius from a linear velocity and angular velocity
         """
-        if angular_vel < .001:
-            last_radius = float("inf")
+        if abs(angular_vel) < .0001:
+            last_radius = 1/.0001
         else:
             last_radius = abs(linear_vel) / abs(angular_vel)
+        if last_radius > 10000:
+            last_radius = 10000
         return last_radius
 
     def kurvature_from_radius(self, radius):
