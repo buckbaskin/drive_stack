@@ -179,10 +179,12 @@ class Driver(object):
         goal = Odometry(target location)
         along_axis, off_axis, heading = self.calc_errors(odom, goal)
         """
+        # rospy.loginfo('location', location)
+        # rospy.loginfo('goal', goal)
         along = self.along_axis_error(location, goal)
         off = self.off_axis_error(location, goal)
         heading = self.heading_error(location, goal)
-        rospy.loginfo('a: %d o: %d h: %d' % (along, off, heading,))
+        rospy.loginfo('a: %4d o: %4d h: %4d' % (along, off, heading,))
         return (along, off, heading,)
 
     # pylint: disable=no-self-use

@@ -10,6 +10,7 @@ from utils import calc_errors, dist, scale, minimize_angle
 from utils import unit as to_unit_tuple
 
 from tf import transformations as tft
+import tf
 
 def unit(function):
     def modded_function(*args, **varargs):
