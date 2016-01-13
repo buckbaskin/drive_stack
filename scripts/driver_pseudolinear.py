@@ -58,31 +58,17 @@ class PseudoLinearDriver(driver.Driver):
         along, off, heading = self.calc_errors(odom, next_goal)
         # rospy.loginfo('aoh'+ str( (along, off, heading)) )
         
-        # 63.6567 is an arbitrary value to make the heading correction 99% of
-        #  90 degrees at 1 meter of offset
-        heading_from_off = math.atan(63.6567*off)
-
-        adjusted_heading = heading + heading_from_off
-        while adjusted_heading > math.pi*2:
-            adjusted_heading = adjusted_heading - math.pi*2
-        while adjusted_heading < math.pi*-2:
-            adjusted_heading = adjusted_heading + math.pi*2
-        if adjusted_heading > math.pi:
-            adjusted_heading = math.pi*-2 + adjusted_heading
-        if adjusted_heading < -math.pi:
-            adjusted_heading = math.pi*2 + adjusted_heading
-
-        # rospy.loginfo('adjusted_heading: '+str(adjusted_heading))
+        adjusted_heading = adjust_heading(heading, off)
 
         if abs(adjusted_heading) > .5: # approx 30 degrees
             twist_out = Twist()
             twist_out.linear.x = 0
             if adjusted_heading < 0:
                 rospy.loginfo('extreme negative heading err')
-                twist_out.angular.z = -0.25
+                twist_out.angular.z = 0.25
             else:
                 rospy.loginfo('extreme positive heading err')
-                twist_out.angular.z = 0.25
+                twist_out.angular.z = -0.25
             self.cmd_vel.publish(twist_out)
             return None
 
@@ -121,12 +107,30 @@ class PseudoLinearDriver(driver.Driver):
 
         self.cmd_vel.publish(twist_out)
 
-    def adjust_heading(heading, offset):
+    def adjust_heading(self, heading, off):
         # sign conventions:
         # axis: x axis is parallel to goal, y axis is to- the left when facing
         #  the goal direction, z-axis is oriented up
         # positive heading error - rotated counter clockwise from goal
-        # positve offset error - positive y-axis, 
+        # positve offset error - positive y-axis
+
+        # 4.8284 is an arbitrary constant that results in the correction being 
+        #  75% of 90 degrees when the offset is .5 meters
+        heading_from_off = -math.atan(4.8284*off)
+
+        adjusted_heading = heading + heading_from_off
+
+        while adjusted_heading > math.pi*2:
+            adjusted_heading = adjusted_heading - math.pi*2
+        while adjusted_heading < math.pi*-2:
+            adjusted_heading = adjusted_heading + math.pi*2
+        if adjusted_heading > math.pi:
+            adjusted_heading = math.pi*-2 + adjusted_heading
+        if adjusted_heading < -math.pi:
+            adjusted_heading = math.pi*2 + adjusted_heading
+
+        return adjusted_heading
+
 
     def check_linear_limits(self, odom, linear_vel):
         """
@@ -166,7 +170,7 @@ class PseudoLinearDriver(driver.Driver):
 
     def advance_next_goal(self, odom, current):
         along, off, heading = self.calc_errors(odom, current)
-        return along <= 0.0
+        return along >= 0.0
 
 if __name__ == '__main__':
     # pylint: disable=invalid-name

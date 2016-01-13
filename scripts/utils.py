@@ -232,5 +232,5 @@ def minimize_angle(delta):
 
     return delta
 
-def is_close(a, b):
-    return abs(a-b) < .0001
+def is_close(a, b, sigma=4):
+    return abs(a-b) < math.pow(1, -sigma)
