@@ -132,7 +132,13 @@ class PseudoLinearDriver(driver.Driver):
     def calc_angular_velocity(self, adjusted_heading):
         # 2.7468 is an arbitrary value so that the atan value results in a
         #  .5 at heading = +-.5
-        return math.atan(10*adjusted_heading)/2.7468
+        ang_vel = -math.atan(10*adjusted_heading)/2.7468
+        if ang_vel > self.max_omega:
+            return self.max_omega
+        elif ang_vel < -self.max_omega:
+            return -self.max_omega
+        else:
+            return ang_vel
 
     def calc_linear_velocity(self, along, off, angular_vel, goal_vel):
 
@@ -149,7 +155,13 @@ class PseudoLinearDriver(driver.Driver):
         scaling_factor = (0.5-abs(angular_vel))/0.5
         scaling_factor = min(max(scaling_factor, 0.0), 1.0) # range 0 to 1
         linear_vel = linear_vel*scaling_factor
-        return linear_vel
+
+        if linear_vel > self.max_v:
+            return self.max_v
+        elif linear_vel < 0.0:
+            return 0.0
+        else:
+            return linear_vel
 
     def check_linear_limits(self, odom, linear_vel):
         """

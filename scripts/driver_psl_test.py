@@ -58,5 +58,47 @@ class TestDriverCalculations(unittest.TestCase):
         self.assertTrue(adjusted_heading > 0.0)
         self.assertTrue(is_close(adjusted_heading, .75*math.pi/2, 4))
 
+    def test_angular_vel1(self):
+        adjusted_heading = 0
+        ang_vel = self.driver_obj.calc_angular_velocity(adjusted_heading)
+        self.assertTrue(is_close(ang_vel, 0.0))
+
+    def test_angular_vel2(self):
+        adjusted_heading = 0.5
+        ang_vel = self.driver_obj.calc_angular_velocity(adjusted_heading)
+        self.assertTrue(ang_vel < 0.0)
+        self.assertTrue(is_close(ang_vel, -0.5))
+
+    def test_angular_vel3(self):
+        adjusted_heading = -0.5
+        ang_vel = self.driver_obj.calc_angular_velocity(adjusted_heading)
+        self.assertTrue(ang_vel > 0.0)
+        self.assertTrue(is_close(ang_vel, 0.5))
+
+    def test_angular_vel4(self):
+        adjusted_heading = 0.25
+        ang_vel = self.driver_obj.calc_angular_velocity(adjusted_heading)
+        self.assertTrue(ang_vel < 0.0)
+        self.assertTrue(is_close(ang_vel, -0.4333), 3)
+
+    def test_angular_vel5(self):
+        adjusted_heading = -0.25
+        ang_vel = self.driver_obj.calc_angular_velocity(adjusted_heading)
+        self.assertTrue(ang_vel > 0.0)
+        self.assertTrue(is_close(ang_vel, 0.4333), 3)
+
+    def test_angular_vel6(self):
+        adjusted_heading = 100.0
+        ang_vel = self.driver_obj.calc_angular_velocity(adjusted_heading)
+        self.assertTrue(ang_vel < 0.0)
+        self.assertTrue(is_close(ang_vel, -self.driver_obj.max_v))
+
+    def test_angular_vel7(self):
+        adjusted_heading = -100.0
+        ang_vel = self.driver_obj.calc_angular_velocity(adjusted_heading)
+        self.assertTrue(ang_vel > 0.0)
+        self.assertTrue(is_close(ang_vel, self.driver_obj.max_v))
+
+
 if __name__ == '__main__':
     unittest.main()
