@@ -28,6 +28,11 @@ class PseudoLinearDriver(driver.Driver):
         super(PseudoLinearDriver, self).__init__()
         self.last_odom = None
 
+        self.max_accel = 1
+        self.max_v = .5
+        self.max_alpha = 1
+        self.max_omega = .5
+
     def process_position(self, odom):
         """
         Uses a somewhat linear correction based on the error from the desired
@@ -57,8 +62,8 @@ class PseudoLinearDriver(driver.Driver):
         # errors along axis "x", off axis "y", heading "theta"
         along, off, heading = self.calc_errors(odom, next_goal)
         # rospy.loginfo('aoh'+ str( (along, off, heading)) )
-        
-        adjusted_heading = adjust_heading(heading, off)
+
+        adjusted_heading = self.calc_adjusted_heading(heading, off)
 
         if abs(adjusted_heading) > .5: # approx 30 degrees
             twist_out = Twist()
@@ -72,20 +77,10 @@ class PseudoLinearDriver(driver.Driver):
             self.cmd_vel.publish(twist_out)
             return None
 
-        # 2.7468 is an arbitrary value so that the atan value results in a 
-        #  .5 at heading = +-.5
-        angular_vel = math.atan(10*adjusted_heading)/2.7468
+        angular_vel = self.calc_angular_velocity(adjusted_heading)
 
-        # 2.7468 is an arbitrary value so that the atan value results in a 
-        #  .5 at along error of = +-.5
-        net_distance = math.sqrt(along*along+off*off)+next_goal.twist.twist.linear.x
-        linear_vel = math.atan(10*net_distance)/2.7468
-
-        # the closer that angular vel gets to .25, the slower the robot moves
-        #  forward or backwards. Based on the way that the angular velocity is
-        #  calculated, the further away the robot is, the more it will correct
-        #  toward where it is supposed to be instead of moving forwards.
-        linear_vel = linear_vel*((0.5-abs(angular_vel))/0.5)
+        linear_vel = self.calc_linear_velocity(along, off, angular_vel,
+            next_goal.twist.twist.linear.x)
 
         # linear and angular velocity are now within dx/dt, d2x/dt2 limits
         twist_out = Twist()
@@ -102,19 +97,21 @@ class PseudoLinearDriver(driver.Driver):
             rospy.loginfo('Error in driver calculation')
             sys.exit(0)
 
-        rospy.loginfo('normal state. '+str(adjusted_heading>0)+' '+str(angular_vel>0))
-        rospy.loginfo('head: %4f off: %4f adj: %4f' % (heading, off, adjusted_heading,))
+        rospy.loginfo('normal state. '+str(adjusted_heading > 0)+' '+
+            str(angular_vel > 0))
+        rospy.loginfo('head: %4f off: %4f adj: %4f' %
+            (heading, off, adjusted_heading,))
 
         self.cmd_vel.publish(twist_out)
 
-    def adjust_heading(self, heading, off):
+    def calc_adjusted_heading(self, heading, off):
         # sign conventions:
         # axis: x axis is parallel to goal, y axis is to- the left when facing
         #  the goal direction, z-axis is oriented up
         # positive heading error - rotated counter clockwise from goal
         # positve offset error - positive y-axis
 
-        # 4.8284 is an arbitrary constant that results in the correction being 
+        # 4.8284 is an arbitrary constant that results in the correction being
         #  75% of 90 degrees when the offset is .5 meters
         heading_from_off = -math.atan(4.8284*off)
 
@@ -131,6 +128,28 @@ class PseudoLinearDriver(driver.Driver):
 
         return adjusted_heading
 
+
+    def calc_angular_velocity(self, adjusted_heading):
+        # 2.7468 is an arbitrary value so that the atan value results in a
+        #  .5 at heading = +-.5
+        return math.atan(10*adjusted_heading)/2.7468
+
+    def calc_linear_velocity(self, along, off, angular_vel, goal_vel):
+
+        net_distance = math.sqrt(along*along+off*off)
+
+        # 2.7468 is an arbitrary value so that the atan value results in a
+        #  .5 at along error of = +-.5
+        linear_vel = math.atan(10*net_distance)/2.7468+goal_vel
+
+        # the closer that angular vel gets to .5, the slower the robot moves
+        #  forward or backwards. Based on the way that the angular velocity is
+        #  calculated, the further away the robot is, the more it will correct
+        #  toward where it is supposed to be instead of moving forwards.
+        scaling_factor = (0.5-abs(angular_vel))/0.5
+        scaling_factor = min(max(scaling_factor, 0.0), 1.0) # range 0 to 1
+        linear_vel = linear_vel*scaling_factor
+        return linear_vel
 
     def check_linear_limits(self, odom, linear_vel):
         """
@@ -169,11 +188,12 @@ class PseudoLinearDriver(driver.Driver):
         return angular_vel
 
     def advance_next_goal(self, odom, current):
-        along, off, heading = self.calc_errors(odom, current)
+        along = self.calc_errors(odom, current)[0]
         return along >= 0.0
 
 if __name__ == '__main__':
     # pylint: disable=invalid-name
-    # ignoring the trivial naming of the PseudoLinearDriver class for startup and run
+    # ignoring the trivial naming of the PseudoLinearDriver class for startup
+    #  and run
     d = PseudoLinearDriver()
     d.run_node()

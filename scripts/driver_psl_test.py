@@ -29,32 +29,32 @@ class TestDriverCalculations(unittest.TestCase):
     def test_zero(self):
         heading = 0
         offset = 0
-        adjusted_heading = self.driver_obj.adjust_heading(heading, offset)
+        adjusted_heading = self.driver_obj.calc_adjusted_heading(heading, offset)
         self.assertTrue(is_close(adjusted_heading, 0.0))
 
     def test_pos_heading(self):
         heading = 1.0
         offset = 0
-        adjusted_heading = self.driver_obj.adjust_heading(heading, offset)
+        adjusted_heading = self.driver_obj.calc_adjusted_heading(heading, offset)
         self.assertTrue(is_close(adjusted_heading, heading))
 
     def test_neg_heading(self):
         heading = -1.0
         offset = 0
-        adjusted_heading = self.driver_obj.adjust_heading(heading, offset)
+        adjusted_heading = self.driver_obj.calc_adjusted_heading(heading, offset)
         self.assertTrue(is_close(adjusted_heading, heading))
 
     def test_pure_offset1(self):
         heading = 0
         offset = .5
-        adjusted_heading = self.driver_obj.adjust_heading(heading, offset)
+        adjusted_heading = self.driver_obj.calc_adjusted_heading(heading, offset)
         self.assertTrue(adjusted_heading < 0.0)
         self.assertTrue(is_close(adjusted_heading, -.75*math.pi/2, 4))
 
     def test_pure_offset2(self):
         heading = 0
         offset = -.5
-        adjusted_heading = self.driver_obj.adjust_heading(heading, offset)
+        adjusted_heading = self.driver_obj.calc_adjusted_heading(heading, offset)
         self.assertTrue(adjusted_heading > 0.0)
         self.assertTrue(is_close(adjusted_heading, .75*math.pi/2, 4))
 
