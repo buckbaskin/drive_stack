@@ -266,7 +266,6 @@ class Driver(object):
         along_axis_error = self.along_axis_error(location, goal)
 
         along_axis_vec = scale(unit(goal_vector), along_axis_error)
-        # print('aav: ', along_axis_vec)
 
         new_rel_x = relative_position_x - along_axis_vec[0]
         new_rel_y = relative_position_y - along_axis_vec[1]
@@ -280,9 +279,9 @@ class Driver(object):
             return 0.0
 
         if cross_product(goal_vector, new_rel_vec)[2] >= 0.0:
-            return -1.0*error_magnitude
-        else:
             return error_magnitude
+        else:
+            return -error_magnitude
 
 
     def heading_error(self, location, goal):

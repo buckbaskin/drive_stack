@@ -40,7 +40,6 @@ class TestDriverCalculations(unittest.TestCase):
         location = easy_Odom(x=0, y=0, v=0.0, heading=0.0, frame='map')
         goal = easy_Odom(x=1.0, y=0, v=0.0, heading=0.0, frame='map')
         along, off, heading = self.driver_obj.calc_errors(location=location, goal=goal)
-        print('ax: ', (along, off, heading,))
         self.assertTrue(is_close(along, -1.0))
         self.assertTrue(is_close(off, 0))
         self.assertTrue(is_close(heading, 0))
