@@ -226,7 +226,7 @@ class Driver(object):
         if abs(val) < .0001:
             return 0.0
 
-        return val
+        return -val
 
     def off_axis_error(self, location, goal):
         """
@@ -246,10 +246,10 @@ class Driver(object):
         example use:
         see calc_errors above
         """
-        relative_position_x = (goal.pose.pose.position.x -
-            location.pose.pose.position.x)
-        relative_position_y = (goal.pose.pose.position.y -
-            location.pose.pose.position.y)
+        relative_position_x = (location.pose.pose.position.x -
+            goal.pose.pose.position.x)
+        relative_position_y = (location.pose.pose.position.y -
+            goal.pose.pose.position.y)
         
         # relative position of the best estimate position and the goal
         # vector points from the goal to the location
@@ -266,6 +266,7 @@ class Driver(object):
         along_axis_error = self.along_axis_error(location, goal)
 
         along_axis_vec = scale(unit(goal_vector), along_axis_error)
+        # print('aav: ', along_axis_vec)
 
         new_rel_x = relative_position_x - along_axis_vec[0]
         new_rel_y = relative_position_y - along_axis_vec[1]
@@ -279,9 +280,9 @@ class Driver(object):
             return 0.0
 
         if cross_product(goal_vector, new_rel_vec)[2] >= 0.0:
-            return error_magnitude
-        else:
             return -1.0*error_magnitude
+        else:
+            return error_magnitude
 
 
     def heading_error(self, location, goal):
@@ -290,7 +291,7 @@ class Driver(object):
         """
         loc_head = quaternion_to_heading(location.pose.pose.orientation)
         goal_head = quaternion_to_heading(goal.pose.pose.orientation)
-        return goal_head - loc_head
+        return loc_head - goal_head
 
     def dist(self, odom1, odom2):
         """

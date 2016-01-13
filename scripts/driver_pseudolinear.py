@@ -121,6 +121,12 @@ class PseudoLinearDriver(driver.Driver):
 
         self.cmd_vel.publish(twist_out)
 
+    def adjust_heading(heading, offset):
+        # sign conventions:
+        # axis: x axis is parallel to goal, y axis is to- the left when facing
+        #  the goal direction, z-axis is oriented up
+        # positive heading error - rotated counter clockwise from goal
+        # positve offset error - positive y-axis, 
 
     def check_linear_limits(self, odom, linear_vel):
         """
