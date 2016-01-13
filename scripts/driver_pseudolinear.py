@@ -33,8 +33,8 @@ class PseudoLinearDriver(driver.Driver):
         Uses a somewhat linear correction based on the error from the desired
         position
         """
-        rospy.loginfo('process_position')
-        rospy.loginfo('odom'+str(odom))
+        # rospy.loginfo('process_position')
+        # rospy.loginfo('odom'+str(odom))
         ## TODO check:
         odom.header.frame_id = 'map'
         self.last_pose_data.publish(odom)
@@ -44,7 +44,7 @@ class PseudoLinearDriver(driver.Driver):
 
         next_goal = self.lead_goal().goal
 
-        rospy.loginfo('goal'+str(next_goal))
+        # rospy.loginfo('goal'+str(next_goal))
 
         while self.advance_next_goal(odom, next_goal):
             # if you are .04 m or less from the goal, move forward
@@ -54,12 +54,10 @@ class PseudoLinearDriver(driver.Driver):
             #  ahead of the current one in the direction that you want to go
             next_goal = self.lead_next().goal
 
-        rospy.loginfo('edede')
         # errors along axis "x", off axis "y", heading "theta"
         along, off, heading = self.calc_errors(odom, next_goal)
         # rospy.loginfo('aoh'+ str( (along, off, heading)) )
-        rospy.loginfo('edede')
-
+        
         # 63.6567 is an arbitrary value to make the heading correction 99% of
         #  90 degrees at 1 meter of offset
         heading_from_off = math.atan(63.6567*off)
@@ -74,16 +72,16 @@ class PseudoLinearDriver(driver.Driver):
         if adjusted_heading < -math.pi:
             adjusted_heading = math.pi*2 + adjusted_heading
 
-        rospy.loginfo('adjusted_heading: '+str(adjusted_heading))
+        # rospy.loginfo('adjusted_heading: '+str(adjusted_heading))
 
         if abs(adjusted_heading) > .5: # approx 30 degrees
             twist_out = Twist()
             twist_out.linear.x = 0
             if adjusted_heading < 0:
-                rospy.loginfo('extreme negative heading error')
+                rospy.loginfo('extreme negative heading err')
                 twist_out.angular.z = -0.25
             else:
-                rospy.loginfo('extreme positive heading error')
+                rospy.loginfo('extreme positive heading err')
                 twist_out.angular.z = 0.25
             self.cmd_vel.publish(twist_out)
             return None
@@ -107,7 +105,7 @@ class PseudoLinearDriver(driver.Driver):
         twist_out = Twist()
         twist_out.linear.x = linear_vel
         twist_out.angular.z = angular_vel
-        rospy.loginfo('lin: '+str(linear_vel)+' ang: '+str(angular_vel))
+        # rospy.loginfo('lin: '+str(linear_vel)+' ang: '+str(angular_vel))
 
         if math.isnan(linear_vel) or math.isnan(angular_vel):
             linear_vel = 0
@@ -117,6 +115,9 @@ class PseudoLinearDriver(driver.Driver):
             self.cmd_vel.publish(twist_out)
             rospy.loginfo('Error in driver calculation')
             sys.exit(0)
+
+        rospy.loginfo('normal state. '+str(adjusted_heading>0)+' '+str(angular_vel>0))
+        rospy.loginfo('head: %4f off: %4f adj: %4f' % (heading, off, adjusted_heading,))
 
         self.cmd_vel.publish(twist_out)
 
