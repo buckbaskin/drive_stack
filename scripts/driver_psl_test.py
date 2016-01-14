@@ -48,15 +48,15 @@ class TestDriverCalculations(unittest.TestCase):
         heading = 0
         offset = .5
         adjusted_heading = self.driver_obj.calc_adjusted_heading(heading, offset)
-        self.assertTrue(adjusted_heading < 0.0)
-        self.assertTrue(is_close(adjusted_heading, -.75*math.pi/2, 4))
+        self.assertTrue(adjusted_heading > 0.0)
+        self.assertTrue(is_close(adjusted_heading, .75*math.pi/2, 4))
 
     def test_pure_offset2(self):
         heading = 0
         offset = -.5
         adjusted_heading = self.driver_obj.calc_adjusted_heading(heading, offset)
-        self.assertTrue(adjusted_heading > 0.0)
-        self.assertTrue(is_close(adjusted_heading, .75*math.pi/2, 4))
+        self.assertTrue(adjusted_heading < 0.0)
+        self.assertTrue(is_close(adjusted_heading, -.75*math.pi/2, 4))
 
     def test_angular_vel1(self):
         adjusted_heading = 0

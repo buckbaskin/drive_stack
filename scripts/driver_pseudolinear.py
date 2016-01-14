@@ -113,7 +113,7 @@ class PseudoLinearDriver(driver.Driver):
 
         # 4.8284 is an arbitrary constant that results in the correction being
         #  75% of 90 degrees when the offset is .5 meters
-        heading_from_off = -math.atan(4.8284*off)
+        heading_from_off = math.atan(4.8284*off)
 
         adjusted_heading = heading + heading_from_off
 
