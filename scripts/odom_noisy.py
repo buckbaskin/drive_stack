@@ -35,9 +35,12 @@ class NoisyOdom(object):
         heading = quaternion_to_heading(odom.pose.pose.orientation)
         heading += noise(0,1)
         odom.pose.pose.orientation = heading_to_quaternion(heading) # 3
-        
+
+        odom.twist.twist.linear.x += noise(0,1) # 4
+        odom.twist.twist.angular.z += noise(0,1) # 5
 
         self.noisy_odom.publish(odom)
+
 
 if __name__ == '__main__':
     no = NoisyOdom()
