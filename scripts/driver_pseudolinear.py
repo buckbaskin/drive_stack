@@ -146,7 +146,7 @@ class PseudoLinearDriver(driver.Driver):
 
         # 2.7468 is an arbitrary value so that the atan value results in a
         #  .5 at along error of = +-.5
-        linear_vel = math.atan(10*net_distance)/2.7468+goal_vel
+        linear_vel = -math.atan(10*net_distance)/2.7468+goal_vel
 
         # the closer that angular vel gets to .5, the slower the robot moves
         #  forward or backwards. Based on the way that the angular velocity is

@@ -233,4 +233,6 @@ def minimize_angle(delta):
     return delta
 
 def is_close(a, b, sigma=4):
+    if not (abs(a-b) < math.pow(1, -sigma)):
+        print(a, 'not close to', b)
     return abs(a-b) < math.pow(1, -sigma)
