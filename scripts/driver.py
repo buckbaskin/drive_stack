@@ -63,7 +63,7 @@ class Driver(object):
 
         self.silent = True
 
-    def wait_for_services(self):
+    def wait_for_services(self, node_name='default_driver'):
         """
         # OVERRIDE this method to have the node wait for a service or services
         #  before offering its own and beginning publishing. Be careful, because
@@ -76,9 +76,8 @@ class Driver(object):
         #  self.start = rospy.Service('/lead/start', Goal, start_callback)
         #  self.back = rospy.Service('/lead/back', Goal, back_callback)
         """
-
-        rospy.init_node('default_driver')
-
+        rospy.init_node(node_name)
+        
         rospy.loginfo('waiting for services')
 
         rospy.wait_for_service('/lead/goal')
