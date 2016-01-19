@@ -36,6 +36,11 @@ class NoisyOdom(object):
         # twist.twist.linear.[x] 4
         # twist.twist.angular.[z] 5
 
+        x = odom.pose.pose.position.x
+        y = odom.pose.pose.position.y
+        v = abs(odom.twist.twist.linear.x)
+        w = abs(odom.twist.twist.angular.z)
+
         odom.pose.pose.position.x += noise(0,self.position_variation) # 1
         odom.pose.pose.position.y += noise(0,self.position_variation) # 2
 
@@ -43,17 +48,17 @@ class NoisyOdom(object):
             odom.pose.pose.position.z +=  noise(0,self.position_variation)
 
         heading = quaternion_to_heading(odom.pose.pose.orientation)
-        heading += noise(0,self.heading_variation)
+        heading += noise(0,self.heading_variation+.05*w+.01*v)
         odom.pose.pose.orientation = heading_to_quaternion(heading) # 3
 
-        odom.twist.twist.linear.x += noise(0,self.linear_vel) # 4
+        odom.twist.twist.linear.x += noise(0,self.linear_vel+.05*v+.01*w) # 4
 
         if odom.twist.twist.linear.y: # if it is not 0
             odom.twist.twist.linear.y +=  noise(0,self.linear_vel)
         if odom.twist.twist.linear.z: # if it is not 0
             odom.twist.twist.linear.z +=  noise(0,self.linear_vel)
 
-        odom.twist.twist.angular.z += noise(0,self.angular_vel) # 5
+        odom.twist.twist.angular.z += noise(0,self.angular_vel+.05*w+.01*v) # 5
 
         if odom.twist.twist.angular.x: # if it is not 0
             odom.twist.twist.angular.x +=  noise(0,self.angular_vel)

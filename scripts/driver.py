@@ -96,7 +96,7 @@ class Driver(object):
         """
         Start the pub/sub portion of the ROS node
         """
-        self.position = rospy.Subscriber('/base_pose_ground_truth', Odometry, self.process_position)
+        self.position = rospy.Subscriber('/ekf_simulated', Odometry, self.process_position)
         self.last_pose_data = rospy.Publisher('/last_pose_data', Odometry, queue_size=1)
         self.cmd_vel = rospy.Publisher('/cmd_vel', Twist, queue_size=1)
         self.silent_cmd = rospy.Publisher('/silent_cmd', Twist, queue_size=1)
