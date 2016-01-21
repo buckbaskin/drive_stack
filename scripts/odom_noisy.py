@@ -14,10 +14,10 @@ class NoisyOdom(object):
         self.noisy_odom = rospy.Publisher('/ekf_simulated', Odometry, queue_size=1)
         self.original_odom = rospy.Publisher('/ekf_clean', Odometry, queue_size=1)
 
-        self.position_variation = .1 # +- .1 m
-        self.heading_variation = .175 # approx 10 degrees
-        self.linear_vel = .1 # +- .1 m/s
-        self.angular_vel = .1 # +- .1 rad/sec
+        self.position_variation = .01 # +- .1 m
+        self.heading_variation = .0175 # approx 10 degrees
+        self.linear_vel = .01 # +- .1 m/s
+        self.angular_vel = .01 # +- .1 rad/sec
 
         rospy.loginfo('noisy odom running.')
         rospy.spin()

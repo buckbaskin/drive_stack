@@ -143,16 +143,20 @@ class PseudoLinearDriver(driver.Driver):
     def calc_linear_velocity(self, along, off, angular_vel, goal_vel):
 
         net_distance = math.sqrt(along*along+off*off)
+        if along < 0:
+            net_distance = -net_distance
 
         # 2.7468 is an arbitrary value so that the atan value results in a
         #  .5 at along error of = +-.5
         linear_vel = -math.atan(10*net_distance)/2.7468+goal_vel
+
 
         # the closer that angular vel gets to .5, the slower the robot moves
         #  forward or backwards. Based on the way that the angular velocity is
         #  calculated, the further away the robot is, the more it will correct
         #  toward where it is supposed to be instead of moving forwards.
         scaling_factor = (0.5-abs(angular_vel))/0.5
+        rospy.loginfo('dis: %f, l_v: %f, s_f: %f' % (net_distance, linear_vel, scaling_factor,))
         scaling_factor = min(max(scaling_factor, 0.0), 1.0) # range 0 to 1
         linear_vel = linear_vel*scaling_factor
 

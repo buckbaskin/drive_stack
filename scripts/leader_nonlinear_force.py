@@ -42,9 +42,6 @@ class ForceLeader(leader.Leader):
         """
         generate a new path, either forwards or backwards (rvs == True)
         """
-        end = self.path_next().goal
-        start = self.path_start().goal
-        
         self.targets = []
         self.targets.append(start)
 

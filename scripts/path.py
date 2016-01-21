@@ -55,11 +55,15 @@ class Path(object):
     def __init__(self):
 
         self.path = []
-        # self.path.append(easy_Odom(x=0, y=0, v=0.0, heading=0.0, frame='map'))
-        self.path.append(easy_Odom(x=2, y=2, v=0.0, heading=0.0, frame='map'))
-        self.path.append(easy_Odom(x=2, y=2, v=0.5, heading=0.0, frame='map'))
-        self.path.append(easy_Odom(x=4, y=3, v=0.5, heading=0.0, frame='map'))
-        self.path.append(easy_Odom(x=6, y=2, v=0.0, heading=0.0, frame='map'))
+        # self.path.append(easy_Odom(x=2, y=2, v=0.5, heading=math.pi/2, frame='map'))
+        self.path.append(easy_Odom(x=2, y=2, v=0.5, heading=math.pi/2, frame='map'))
+        self.path.append(easy_Odom(x=2, y=7, v=0.5, heading=math.pi/2, frame='map'))
+        # self.path.append(easy_Odom(x=2.5, y=7.75, v=0.5, heading=math.pi/4, frame='map'))
+        self.path.append(easy_Odom(x=3, y=8, v=0.5, heading=0.0, frame='map'))
+        self.path.append(easy_Odom(x=4, y=7, v=0.5, heading=-math.pi/2, frame='map'))
+        self.path.append(easy_Odom(x=4, y=2, v=0.5, heading=-math.pi/2, frame='map'))
+        self.path.append(easy_Odom(x=3, y=1, v=0.5, heading=-math.pi, frame='map'))
+        self.path.append(easy_Odom(x=2, y=2, v=0.0, heading=math.pi/2, frame='map'))
         self.index = 0
 
         self.rolling_index = -1
