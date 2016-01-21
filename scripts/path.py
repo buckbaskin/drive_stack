@@ -206,5 +206,5 @@ class Path(object):
 
 if __name__ == '__main__':
     # pylint: disable=invalid-name
-    path = Path(True)
+    path = Path(False)
     path.run_server()

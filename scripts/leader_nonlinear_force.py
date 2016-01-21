@@ -212,7 +212,7 @@ class ForceLeader(leader.Leader):
             listener = tf.TransformListener()
             try:
                 (trans, rot) = listener.lookupTransform('/map', '/odom', rospy.Time(0))
-                return self.odom_transform_2d(data, trans, rot)
+                return self.odom_transform_2d(data,'/map', trans, rot)
 
             except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
                 return data
