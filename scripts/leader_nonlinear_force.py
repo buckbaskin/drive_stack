@@ -4,6 +4,7 @@ import leader
 import rospy
 import math
 from nav_msgs.msg import Odometry
+from geometry_msgs.msg import Quaternion
 
 from utils import heading_to_quaternion, quaternion_to_heading
 from utils import calc_errors, dist, scale, minimize_angle
