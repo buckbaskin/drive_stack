@@ -227,7 +227,10 @@ class ForceLeader(leader.Leader):
         odom_new.pose.pose.position.y = data.pose.pose.position.y + trans[1]
         odom_new.pose.pose.position.z = data.pose.pose.position.z + trans[2]
         rospy.loginfo('td: %s tr: %s' % (str(type(data)), str(type(rot))))
-        odom_new.pose.pose.orientation = tft.quaternion_multiply(data.pose.pose.orientation, rot)
+        q = data.pose.pose.orientation
+        q_tuple = (q.x, q.y, q.z, q.w,)
+        # Quaternion(*(tft quaternion)) converts a tf-style quaternion to a ROS msg quaternion
+        odom_new.pose.pose.orientation = Quaternion(*tft.quaternion_multiply(q_tuple, rot))
 
         heading_change = quaternion_to_heading(rot)
 
