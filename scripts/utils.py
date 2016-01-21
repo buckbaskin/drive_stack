@@ -13,7 +13,6 @@ def quaternion_to_heading(quaternion):
     """
     try:
         quat = [quaternion.x, quaternion.y, quaternion.z, quaternion.w]
-        rospy.loginfo('it worked...')
     except AttriubteError:
         quat = quaternion
     yaw = tft.euler_from_quaternion(quat)[2]
