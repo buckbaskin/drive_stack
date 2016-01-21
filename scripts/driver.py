@@ -26,7 +26,7 @@ Copyright 2015 William Baskin
 
 import rospy
 import math
-from tf import transformations as tft
+# from tf import transformations as tft
 from nav_msgs.msg import Odometry
 from geometry_msgs.msg import Twist, Quaternion
 from drive_stack.srv import Goal
@@ -252,8 +252,7 @@ class Driver(object):
         
         # relative position of the best estimate position and the goal
         # vector points from the goal to the location
-        relative_position = (relative_position_x, relative_position_y,
-            0.0)
+        ## relative_position = (relative_position_x, relative_position_y, 0.0)
 
         goal_heading = quaternion_to_heading(goal.pose.pose.orientation)
         goal_vector_x = math.cos(goal_heading)

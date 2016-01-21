@@ -84,6 +84,8 @@ class ForceLeader(leader.Leader):
             count += 1
             next_ = current.sample_motion_model2(v, w, dt)
 
+            odom_next = self.convert_to_odom(next_)
+
             self.targets.append(next_)
 
             errors = calc_errors(next_, end)
@@ -208,6 +210,7 @@ class ForceLeader(leader.Leader):
             listener = tf.TransformListener()
             try:
                 (trans, rot) = listener.lookupTransform('/map', '/odom', rospy.Time(0))
+                rospy.loginfo('tt: %s tr: %s' % (str(type(trans)), str(type(rot))))
                 return self.odom_transform_2d(data, trans, rot)
 
             except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
@@ -223,6 +226,7 @@ class ForceLeader(leader.Leader):
         odom_new.pose.pose.position.x = data.pose.pose.position.x + trans[0]
         odom_new.pose.pose.position.y = data.pose.pose.position.y + trans[1]
         odom_new.pose.pose.position.z = data.pose.pose.position.z + trans[2]
+        rospy.loginfo('td: %s tr: %s' % (str(type(data)), str(type(rot))))
         odom_new.pose.pose.orientation = tft.quaternion_multiply(data.pose.pose.orientation, rot)
 
         heading_change = quaternion_to_heading(rot)
