@@ -1,0 +1,6 @@
+<launch>
+  <!-- Launch the path, leader, and driver for navigation. -->
+  <node pkg="drive_stack" type="path.py" name="path" output="screen"/>
+  <node pkg="drive_stack" type="leader_nonlinear_force.py" name="leader" output="screen"/>
+  <node pkg="drive_stack" type="driver_pseudolinear.py" name="driver" output="screen"/>
+</launch>
