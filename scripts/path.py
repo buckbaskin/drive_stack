@@ -52,18 +52,51 @@ class Path(object):
     # pylint: disable=too-many-instance-attributes
     # These attributes represent the path, frame, and pub/sub
 
-    def __init__(self):
+    def __init__(self, triple=False):
 
         self.path = []
-        # self.path.append(easy_Odom(x=2, y=2, v=0.5, heading=math.pi/2, frame='map'))
-        self.path.append(easy_Odom(x=2, y=2, v=0.5, heading=math.pi/2, frame='map'))
-        self.path.append(easy_Odom(x=2, y=7, v=0.5, heading=math.pi/2, frame='map'))
-        # self.path.append(easy_Odom(x=2.5, y=7.75, v=0.5, heading=math.pi/4, frame='map'))
-        self.path.append(easy_Odom(x=3, y=8, v=0.5, heading=0.0, frame='map'))
-        self.path.append(easy_Odom(x=4, y=7, v=0.5, heading=-math.pi/2, frame='map'))
-        self.path.append(easy_Odom(x=4, y=2, v=0.5, heading=-math.pi/2, frame='map'))
-        self.path.append(easy_Odom(x=3, y=1, v=0.5, heading=-math.pi, frame='map'))
-        self.path.append(easy_Odom(x=2, y=2, v=0.0, heading=math.pi/2, frame='map'))
+        if not triple:
+            # start
+            self.path.append(easy_Odom(x=2, y=2, v=0.5, heading=math.pi/2, frame='map'))
+            # out
+            self.path.append(easy_Odom(x=2, y=7, v=0.5, heading=math.pi/2, frame='map'))
+            # over
+            self.path.append(easy_Odom(x=3, y=8, v=0.5, heading=0.0, frame='map'))
+            # turned around
+            self.path.append(easy_Odom(x=4, y=7, v=0.5, heading=-math.pi/2, frame='map'))
+            # back
+            self.path.append(easy_Odom(x=4, y=2, v=0.5, heading=-math.pi/2, frame='map'))
+            # over
+            self.path.append(easy_Odom(x=3, y=1, v=0.5, heading=-math.pi, frame='map'))
+            # back to 0rigin
+            self.path.append(easy_Odom(x=2, y=2, v=0.0, heading=math.pi/2, frame='map'))
+        else:
+            # start
+            self.path.append(easy_Odom(x=2, y=2, v=0.5, heading=math.pi/2, frame='map'))
+            # start cross 1
+            self.path.append(easy_Odom(x=3, y=3, v=0.5, heading=0.0, frame='map'))
+            # end cross 1
+            self.path.append(easy_Odom(x=4, y=3, v=0.5, heading=0.0, frame='map'))
+            # up
+            self.path.append(easy_Odom(x=5, y=4, v=0.5, heading=math.pi/2, frame='map'))
+            # start cross 2
+            self.path.append(easy_Odom(x=4, y=5, v=0.5, heading=-math.pi, frame='map'))
+            # end cross 2
+            self.path.append(easy_Odom(x=2, y=5, v=0.5, heading=-math.pi, frame='map'))
+            # up
+            self.path.append(easy_Odom(x=1, y=6, v=0.5, heading=math.pi/2, frame='map'))
+            # start cross 3
+            self.path.append(easy_Odom(x=2, y=7, v=0.0, heading=0.0, frame='map'))
+            # end cross 3
+            self.path.append(easy_Odom(x=4, y=7, v=0.5, heading=0.0, frame='map'))
+            # down
+            self.path.append(easy_Odom(x=5, y=5, v=0.5, heading=-math.pi/2, frame='map'))
+            # back
+            self.path.append(easy_Odom(x=5, y=2, v=0.5, heading=-math.pi/2, frame='map'))
+            # over
+            self.path.append(easy_Odom(x=3, y=1, v=0.5, heading=-math.pi, frame='map'))
+            # back to 0rigin
+            self.path.append(easy_Odom(x=2, y=2, v=0.0, heading=math.pi/2, frame='map'))
         self.index = 0
 
         self.rolling_index = -1
@@ -173,5 +206,5 @@ class Path(object):
 
 if __name__ == '__main__':
     # pylint: disable=invalid-name
-    path = Path()
+    path = Path(True)
     path.run_server()
