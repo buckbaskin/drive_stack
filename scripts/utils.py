@@ -11,7 +11,10 @@ def quaternion_to_heading(quaternion):
     input: nav_msgs.msg.Quaternion
     output: euler heading in radians
     """
-    quat = [quaternion.x, quaternion.y, quaternion.z, quaternion.w]
+    try:
+        quat = [quaternion.x, quaternion.y, quaternion.z, quaternion.w]
+    except AttriubteError:
+        quat = *quaternion
     yaw = tft.euler_from_quaternion(quat)[2]
     return yaw
 
