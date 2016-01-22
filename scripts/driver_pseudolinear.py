@@ -86,7 +86,7 @@ class PseudoLinearDriver(driver.Driver):
         twist_out = Twist()
         twist_out.linear.x = linear_vel
         twist_out.angular.z = angular_vel
-        # rospy.loginfo('lin: '+str(linear_vel)+' ang: '+str(angular_vel))
+        rospy.loginfo('lin: '+str(linear_vel)+' ang: '+str(angular_vel))
 
         if math.isnan(linear_vel) or math.isnan(angular_vel):
             linear_vel = 0
@@ -97,9 +97,9 @@ class PseudoLinearDriver(driver.Driver):
             rospy.loginfo('Error in driver calculation')
             sys.exit(0)
 
-        rospy.loginfo('normal state. '+str(adjusted_heading > 0)+' '+
+        # rospy.loginfo('normal state. '+str(adjusted_heading > 0)+' '+
             str(angular_vel > 0))
-        rospy.loginfo('head: %4f off: %4f adj: %4f' %
+        # rospy.loginfo('head: %4f off: %4f adj: %4f' %
             (heading, off, adjusted_heading,))
 
         self.cmd_vel.publish(twist_out)

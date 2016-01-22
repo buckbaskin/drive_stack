@@ -264,7 +264,7 @@ class Leader(object):
         if len(self.targets) >= 2:
             self.current.publish(self.goal_callback().goal)
             self.start_pub.publish(self.start_callback().goal)
-            rospy.loginfo('printing rolling.')
+            # rospy.loginfo('printing rolling.')
             self.rolling.publish(self.next_rolling_pub())
         else:
             rospy.loginfo('not rolling, targets too short')

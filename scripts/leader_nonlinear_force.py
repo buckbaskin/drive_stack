@@ -67,9 +67,9 @@ class ForceLeader(leader.Leader):
             current = StateModel(next_)
             force_vector = self.get_force_vector(start, end, next_)
             force_heading = math.atan2(force_vector[1], force_vector[0])
-            rospy.loginfo('fhead: '+str(force_heading)[0:5])
+            # rospy.loginfo('fhead: '+str(force_heading)[0:5])
             heading_err = minimize_angle(force_heading - current.theta)
-            rospy.loginfo('headerr: '+str(heading_err)[0:5])
+            # rospy.loginfo('headerr: '+str(heading_err)[0:5])
 
             # pylint: disable=invalid-name
             # v, w, are accurately describing what I want in this case
@@ -117,13 +117,13 @@ class ForceLeader(leader.Leader):
         # wobs = self.weighted_obstacle(start, end, current)
 
         force = (wdep[0]+warr[0]+wtrv[0], wdep[1]+warr[1]+wtrv[1], 0,)
-        rospy.loginfo('final: '+str(force[0])[0:5]+' '+str(force[1])[0:5]+' '+str(force[2])[0:5])
+        # rospy.loginfo('final: '+str(force[0])[0:5]+' '+str(force[1])[0:5]+' '+str(force[2])[0:5])
         return force
 
     def weighted_depart(self, start, end, current):
         depart_vector = self.depart_vector(start, end, current)
         w = self.depart_weight(start, end, current)
-        rospy.loginfo('wdp: '+str(depart_vector[0])[0:4]+' , '+str(depart_vector[1])[0:4]+' , '+str(w)[0:4])
+        # rospy.loginfo('wdp: '+str(depart_vector[0])[0:4]+' , '+str(depart_vector[1])[0:4]+' , '+str(w)[0:4])
         return scale(depart_vector, w)
 
     # pylint: disable=unused-argument
@@ -153,7 +153,7 @@ class ForceLeader(leader.Leader):
     def weighted_arrive(self, start, end, current):
         arrive_vector = self.arrive_vector(start, end, current)
         w = self.arrive_weight(start, end, current)
-        rospy.loginfo('war: '+str(arrive_vector[0])[0:4]+' , '+str(arrive_vector[1])[0:4]+' , '+str(w)[0:4])
+        # rospy.loginfo('war: '+str(arrive_vector[0])[0:4]+' , '+str(arrive_vector[1])[0:4]+' , '+str(w)[0:4])
         return scale(arrive_vector, w)
 
     # pylint: disable=unused-argument
@@ -170,7 +170,7 @@ class ForceLeader(leader.Leader):
 
         final_direction = minimize_angle(axis_direction+heading_correction)
 
-        rospy.loginfo('avr: axis '+str(axis_direction)[0:4]+' corr '+str(heading_correction)[0:4]+' off '+str(off_axis)[0:5]+' fina '+str(final_direction)[0:5])
+        # rospy.loginfo('avr: axis '+str(axis_direction)[0:4]+' corr '+str(heading_correction)[0:4]+' off '+str(off_axis)[0:5]+' fina '+str(final_direction)[0:5])
 
         return (math.cos(final_direction), math.sin(final_direction), 0,)
 
@@ -185,7 +185,7 @@ class ForceLeader(leader.Leader):
     def weighted_traverse(self, start, end, current):
         traverse_vector = self.traverse_vector(start, end, current)
         w = self.traverse_weight(start, end, current)
-        rospy.loginfo('wtr: '+str(traverse_vector[0])[0:4]+' , '+str(traverse_vector[1])[0:4]+' , '+str(w)[0:4])
+        # rospy.loginfo('wtr: '+str(traverse_vector[0])[0:4]+' , '+str(traverse_vector[1])[0:4]+' , '+str(w)[0:4])
         return scale(traverse_vector, w)
 
     # pylint: disable=unused-argument
@@ -211,7 +211,7 @@ class ForceLeader(leader.Leader):
             listener = tf.TransformListener()
             try:
                 (trans, rot) = listener.lookupTransform('/map', '/odom', rospy.Time(0))
-                rospy.loginfo('tt: %s tr: %s' % (str(type(trans)), str(type(rot))))
+                # rospy.loginfo('tt: %s tr: %s' % (str(type(trans)), str(type(rot))))
                 return self.odom_transform_2d(data, '/map', trans, rot)
 
             except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
@@ -227,7 +227,7 @@ class ForceLeader(leader.Leader):
         odom_new.pose.pose.position.x = data.pose.pose.position.x + trans[0]
         odom_new.pose.pose.position.y = data.pose.pose.position.y + trans[1]
         odom_new.pose.pose.position.z = data.pose.pose.position.z + trans[2]
-        rospy.loginfo('td: %s tr: %s' % (str(type(data)), str(type(rot))))
+        # rospy.loginfo('td: %s tr: %s' % (str(type(data)), str(type(rot))))
         q = data.pose.pose.orientation
         q_tuple = (q.x, q.y, q.z, q.w,)
         # Quaternion(*(tft quaternion)) converts a tf-style quaternion to a ROS msg quaternion
