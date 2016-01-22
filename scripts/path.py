@@ -52,10 +52,15 @@ class Path(object):
     # pylint: disable=too-many-instance-attributes
     # These attributes represent the path, frame, and pub/sub
 
-    def __init__(self, triple=False):
+    def __init__(self, triple='simple'):
 
         self.path = []
-        if not triple:
+        if triple == 'simple':
+            # start
+            self.path.append(easy_Odom(x=0, y=0, v=0.5, heading=0.0, frame='map'))
+            # out
+            self.path.append(easy_Odom(x=0.5, y=0, v=0.0, heading=0.0, frame='map'))
+        elif triple == 'I':
             # start
             self.path.append(easy_Odom(x=2, y=2, v=0.5, heading=math.pi/2, frame='map'))
             # out
@@ -70,7 +75,7 @@ class Path(object):
             self.path.append(easy_Odom(x=3, y=1, v=0.5, heading=-math.pi, frame='map'))
             # back to 0rigin
             self.path.append(easy_Odom(x=2, y=2, v=0.0, heading=math.pi/2, frame='map'))
-        else:
+        elif triple == 'III':
             # start
             self.path.append(easy_Odom(x=2, y=2, v=0.5, heading=math.pi/2, frame='map'))
             # start cross 1
@@ -206,5 +211,5 @@ class Path(object):
 
 if __name__ == '__main__':
     # pylint: disable=invalid-name
-    path = Path(False)
+    path = Path('simple')
     path.run_server()
