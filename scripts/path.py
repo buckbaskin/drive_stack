@@ -57,7 +57,7 @@ class Path(object):
         self.path = []
         if triple == 'simple':
             # start
-            self.path.append(easy_Odom(x=0, y=0, v=0.5, heading=0.0, frame='map'))
+            self.path.append(easy_Odom(x=0, y=0, v=0.0, heading=0.0, frame='map'))
             # out
             self.path.append(easy_Odom(x=0.5, y=0, v=0.0, heading=0.0, frame='map'))
         elif triple == 'I':
@@ -211,5 +211,6 @@ class Path(object):
 
 if __name__ == '__main__':
     # pylint: disable=invalid-name
-    path = Path('simple')
+    path = Path('I')
+    # path = Path('III')
     path.run_server()

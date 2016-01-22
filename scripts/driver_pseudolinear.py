@@ -98,9 +98,9 @@ class PseudoLinearDriver(driver.Driver):
             sys.exit(0)
 
         # rospy.loginfo('normal state. '+str(adjusted_heading > 0)+' '+
-            str(angular_vel > 0))
+        #    str(angular_vel > 0))
         # rospy.loginfo('head: %4f off: %4f adj: %4f' %
-            (heading, off, adjusted_heading,))
+        #    (heading, off, adjusted_heading,))
 
         self.cmd_vel.publish(twist_out)
 
