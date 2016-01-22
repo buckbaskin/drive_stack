@@ -183,7 +183,7 @@ class Driver(object):
         along = self.along_axis_error(location, goal)
         off = self.off_axis_error(location, goal)
         heading = self.heading_error(location, goal)
-        # rospy.loginfo('a: %4d o: %4d h: %4d' % (along, off, heading,))
+        rospy.loginfo('a: %d o: %d h: %d' % (along, off, heading,))
         return (along, off, heading,)
 
     # pylint: disable=no-self-use
