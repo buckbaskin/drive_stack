@@ -85,6 +85,7 @@ class ForceLeader(leader.Leader):
             count += 1
             next_ = current.sample_motion_model2(v, w, dt)
             rospy.loginfo('leader req vel: '+str(next_.twist.twist.linear.x))
+            rospy.loginfo('lead vel: '+str(next_.twist.twist.linear.x))
 
             # odom_next = self.convert_to_odom(next_)
 
