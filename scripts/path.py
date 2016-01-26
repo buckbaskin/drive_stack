@@ -57,11 +57,11 @@ class Path(object):
         self.path = []
         if triple == 'simple':
             # start
-            self.path.append(easy_Odom(x=0, y=0, v=0.5, heading=0.0, frame='map'))
+            self.path.append(easy_Odom(x=0, y=0, v=0.0, heading=0.0, frame='map'))
             # out
             self.path.append(easy_Odom(x=0.5, y=0, v=0.0, heading=0.0, frame='map'))
         elif triple == 'I':
-            # start
+            # star
             self.path.append(easy_Odom(x=2, y=2, v=0.5, heading=math.pi/2, frame='map'))
             # out
             self.path.append(easy_Odom(x=2, y=7, v=0.5, heading=math.pi/2, frame='map'))

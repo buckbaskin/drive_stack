@@ -25,6 +25,8 @@ Copyright 2015 William Baskin
  srv/lead/start - returns starting target
  srv/lead/back - moves path to previous target, returns that target
  msg/lead/current - publishes current target
+
+ # TODO(buckbaskin): scale down the velocity to match the endpoint velocity
  '''
 
 import rospy
