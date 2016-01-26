@@ -33,11 +33,17 @@ class PseudoLinearDriver(driver.Driver):
         self.max_alpha = 1
         self.max_omega = .5
 
+        self.state = 'startup'
+
     def process_position(self, odom):
         """
         Uses a somewhat linear correction based on the error from the desired
         position
         """
+        if self.state == 'startup':
+            # this will exit the callback and not respond the the EKF
+            #  information if it is still running the startup open loop
+            return None
         # rospy.loginfo('process_position')
         # rospy.loginfo('odom'+str(odom))
         ## TODO check:
@@ -67,12 +73,12 @@ class PseudoLinearDriver(driver.Driver):
 
         if abs(adjusted_heading) > .5: # approx 30 degrees
             twist_out = Twist()
-            twist_out.linear.x = 0
+            twist_out.linear.x = .1
             if adjusted_heading < 0:
-                rospy.loginfo('extreme negative heading err')
+                rospy.loginfo('extreme negative heading err w/ forward')
                 twist_out.angular.z = 0.25
             else:
-                rospy.loginfo('extreme positive heading err')
+                rospy.loginfo('extreme positive heading err w/ forward')
                 twist_out.angular.z = -0.25
             self.cmd_vel.publish(twist_out)
             return None
@@ -206,6 +212,40 @@ class PseudoLinearDriver(driver.Driver):
     def advance_next_goal(self, odom, current):
         along = self.calc_errors(odom, current)[0]
         return along >= 0.0
+
+    def run_node(self):
+        """
+        Runs the ROS node (initialization, cyclical pub/sub)
+        """
+        self.wait_for_services()
+        self.init_node()
+        rospy.loginfo('driver: node ready')
+        rate = 20
+        steps = rate*2.0
+        top_speed = 0.25
+        increment = top_speed/(steps/4)
+        rt = rospy.Rate(rate)
+        initial_twist = Twist()
+        
+        initial_twist.linear.x = 0.0
+        initial_twist.angular.z = 0.0
+
+        for i in range(0,steps):
+            if (i < steps / 4):
+                initial_twist.linear.x += increment
+            elif (i > 3*steps/4):
+                initial_twist.linear.x -= increment
+            else:
+                pass
+            
+            self.cmd_vel.publish(initial_twist)
+
+        initial_twist.linear.x = 0.0
+        self.cmd_vel.publish(initial_twist)
+        
+        self.state = 'running'
+        
+        rospy.spin()
 
 if __name__ == '__main__':
     # pylint: disable=invalid-name
