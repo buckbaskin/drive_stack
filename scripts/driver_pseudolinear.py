@@ -221,7 +221,7 @@ class PseudoLinearDriver(driver.Driver):
         self.init_node()
         rospy.loginfo('driver: node ready')
         rate = 20
-        steps = rate*2.0
+        steps = rate*8
         top_speed = 0.25
         increment = top_speed/(steps/4)
         rt = rospy.Rate(rate)
@@ -230,7 +230,7 @@ class PseudoLinearDriver(driver.Driver):
         initial_twist.linear.x = 0.0
         initial_twist.angular.z = 0.0
 
-        for i in range(0,steps):
+        for i in range(0,int(steps)):
             if (i < steps / 4):
                 initial_twist.linear.x += increment
             elif (i > 3*steps/4):
@@ -239,6 +239,7 @@ class PseudoLinearDriver(driver.Driver):
                 pass
             
             self.cmd_vel.publish(initial_twist)
+            rt.sleep()
 
         initial_twist.linear.x = 0.0
         self.cmd_vel.publish(initial_twist)
