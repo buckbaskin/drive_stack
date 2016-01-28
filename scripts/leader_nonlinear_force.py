@@ -264,7 +264,7 @@ class ForceLeader(leader.Leader):
         rate = rospy.Rate(run_hz)
         while not rospy.is_shutdown():
             self.publish_leader_interface()
-            rospy.loginfo('index: '+str(self.index)+' len: '+str(len(self.targets)))
+            # rospy.loginfo('index: '+str(self.index)+' len: '+str(len(self.targets)))
             if self.index >= len(self.targets) - 20:
                 rospy.loginfo('advance regeneration')
                 self.generate_next_path()
