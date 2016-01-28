@@ -15,6 +15,7 @@ import sys
 # from driver import dot_product, cross_product, scale, unit
 # import rospy
 from geometry_msgs.msg import Twist
+from nav_msgs.msg import Odometry
 
 class PseudoLinearDriver(driver.Driver):
     """
@@ -219,9 +220,10 @@ class PseudoLinearDriver(driver.Driver):
         """
         self.wait_for_services()
         self.init_node()
+        self.position = rospy.Subscriber('/base_pose_ground_truth', Odometry, self.process_position)
         rospy.loginfo('driver: node ready')
         rate = 20
-        steps = rate*2.0
+        steps = int(rate*2.0)
         top_speed = 0.25
         increment = top_speed/(steps/4)
         rt = rospy.Rate(rate)
@@ -239,11 +241,13 @@ class PseudoLinearDriver(driver.Driver):
                 pass
             
             self.cmd_vel.publish(initial_twist)
+            rt.sleep()
 
         initial_twist.linear.x = 0.0
         self.cmd_vel.publish(initial_twist)
         
         self.state = 'running'
+        rospy.loginfo('state: '+str(self.state))
         
         rospy.spin()
 

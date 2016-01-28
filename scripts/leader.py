@@ -82,10 +82,13 @@ class Leader(object):
         """
         if len(self.targets) > self.index+2:
             self.index += 1
+            if self.index > len(self.targets):
+                self.index = len(self.targets)
             if self.index < 0:
                 self.index = 0
             return self.goal_callback()
         else:
+            # keep this here, just in case the ahead of time build doesn't work
             self.generate_next_path()
             return self.goal_callback()
 
@@ -271,13 +274,13 @@ class Leader(object):
         else:
             rospy.loginfo('not rolling, targets too short')
 
-    def run_server(self):
+    def run_server(self, run_hz=5):
         """
         Run the node
         """
         self.init_server()
         rospy.loginfo('leader: server running')
-        rate = rospy.Rate(5)
+        rate = rospy.Rate(run_hz)
         while not rospy.is_shutdown():
             self.publish_leader_interface()
             rate.sleep()

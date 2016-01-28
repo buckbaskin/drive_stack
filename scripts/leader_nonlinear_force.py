@@ -30,20 +30,27 @@ class ForceLeader(leader.Leader):
         """
         Path creation for node
         """
+        self.targets = []
         end = self.path_goal().goal
         start = self.path_start().goal
         self.common_path_gen(start, end)
+        self.index = 0
 
     def generate_next_path(self):
+        # use this to block
+        # raw_input('ego?')
         end = self.path_next().goal
         start = self.path_start().goal
+        old_index = len(self.targets)
         self.common_path_gen(start, end)
+        self.rolling_index = old_index
 
     def common_path_gen(self, start, end):
         """
-        generate a new path, either forwards or backwards (rvs == True)
+        generate a new path forwards
         """
-        self.targets = []
+        # don't destroy previous work
+        # self.targets = []
         self.targets.append(start)
 
         # pylint: disable=invalid-name
@@ -84,8 +91,8 @@ class ForceLeader(leader.Leader):
 
             count += 1
             next_ = current.sample_motion_model2(v, w, dt)
-            rospy.loginfo('leader req vel: '+str(next_.twist.twist.linear.x))
-            rospy.loginfo('lead vel: '+str(next_.twist.twist.linear.x))
+            # rospy.loginfo('leader req vel: '+str(next_.twist.twist.linear.x))
+            # rospy.loginfo('lead vel: '+str(next_.twist.twist.linear.x))
 
             # odom_next = self.convert_to_odom(next_)
 
@@ -95,8 +102,9 @@ class ForceLeader(leader.Leader):
             along = errors[0]
             # rospy.loginfo('alongher alenghi alphabet: '+str(along))
 
-        self.index = 0
-
+        # don't destroy previous work, keep old index
+        # self.index = 0
+    # end common_path_gen
 
 
     @unit # forces a unit vector to be returned, scaled by weight
@@ -247,6 +255,21 @@ class ForceLeader(leader.Leader):
 
         return odom_new
 
+    def run_server(self, run_hz=10):
+        """
+        Run the node (with end of index checking)
+        """
+        self.init_server()
+        rospy.loginfo('leader: server running (nonlinear force)')
+        rate = rospy.Rate(run_hz)
+        while not rospy.is_shutdown():
+            self.publish_leader_interface()
+            rospy.loginfo('index: '+str(self.index)+' len: '+str(len(self.targets)))
+            if self.index >= len(self.targets) - 20:
+                rospy.loginfo('advance regeneration')
+                self.generate_next_path()
+            rate.sleep()
+
 class StateModel(object):
     def __init__(self, odom):
         self.x = odom.pose.pose.position.x
@@ -371,9 +394,8 @@ class StateModel(object):
         return 0
 
 
-
 if __name__ == '__main__':
     # pylint: disable=invalid-name
     # leader is a fine name, it's not a constant
     leader = ForceLeader()
-    leader.run_server()
+    leader.run_server(20)

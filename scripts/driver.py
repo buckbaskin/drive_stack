@@ -77,6 +77,7 @@ class Driver(object):
         #  self.back = rospy.Service('/lead/back', Goal, back_callback)
         """
         rospy.init_node(node_name)
+        rospy.loginfo('rospy init node '+str(node_name))
         
         rospy.loginfo('waiting for services')
 
