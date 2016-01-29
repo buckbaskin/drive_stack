@@ -123,8 +123,8 @@ class PseudoLinearDriver(driver.Driver):
             rospy.loginfo('extreme case')
             ang_vel = 0.0 # TODO(buckbaskin): fix this
         else: # normal case
-            relative_gain = 1.0
-            avg_gain = 2.0
+            relative_gain = 2.0
+            avg_gain = 4.0
 
             return_to_heading_gain = (2.0*abs(avg_gain))/(abs(relative_gain)+1)
             return_to_line_gain = abs(relative_gain)*return_to_heading_gain
