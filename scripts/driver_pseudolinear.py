@@ -72,10 +72,12 @@ class PseudoLinearDriver(driver.Driver):
 
         adjusted_heading = self.calc_adjusted_heading(heading, off)
 
-        angular_vel = self.calc_angular_velocity(adjusted_heading)
+        extreme_case = abs(adjusted_heading) > .5
+
+        angular_vel = self.calc_angular_velocity(adjusted_heading, extreme_case, odom)
 
         linear_vel = self.calc_linear_velocity(along, off, angular_vel,
-            next_goal.twist.twist.linear.x)
+            next_goal.twist.twist.linear.x, extreme_case, odom)
 
         # linear and angular velocity are now within dx/dt, d2x/dt2 limits
         twist_out = Twist()
@@ -119,8 +121,8 @@ class PseudoLinearDriver(driver.Driver):
         return adjusted_heading
 
 
-    def calc_angular_velocity(self, adjusted_heading):
-        if abs(adjusted_heading) > .5: # extreme case
+    def calc_angular_velocity(self, adjusted_heading, extreme_case, odom):
+        if extreme_case: # extreme case
             if adjusted_heading < 0:
                 rospy.loginfo('extreme negative heading err w/ forward')
                 ang_vel = 0.25
@@ -135,10 +137,10 @@ class PseudoLinearDriver(driver.Driver):
             b = 2.7468
             ang_vel = -math.atan(a*adjusted_heading)/b
 
-        return check_angular_limits(ang_vel)
+        return self.check_angular_limits(odom, ang_vel)
 
-    def calc_linear_velocity(self, along, off, angular_vel, goal_vel):
-        if abs(adjusted_heading) > .5: # extreme case
+    def calc_linear_velocity(self, along, off, angular_vel, goal_vel, extreme_case, odom):
+        if extreme_case: # extreme case
             linear_vel = .25
         else:
             net_distance = math.sqrt(along*along+off*off)
@@ -160,7 +162,7 @@ class PseudoLinearDriver(driver.Driver):
             scaling_factor = min(max(scaling_factor, 0.0), 1.0) # range 0 to 1
             linear_vel = linear_vel*scaling_factor
 
-        return check_linear_limits(linear_vel)
+        return self.check_linear_limits(odom, linear_vel)
 
     def check_linear_limits(self, odom, linear_vel):
         """
@@ -220,10 +222,10 @@ class PseudoLinearDriver(driver.Driver):
         initial_twist.linear.x = 0.0
         initial_twist.angular.z = 0.0
 
-        for i in range(0,int(steps)):
-            if (i < steps / 4):
+        for i in range(0, int(steps)):
+            if i < steps / 4:
                 initial_twist.linear.x += increment
-            elif (i > 3*steps/4):
+            elif i > 3*steps/4:
                 initial_twist.linear.x -= increment
             else:
                 pass
