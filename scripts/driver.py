@@ -30,7 +30,7 @@ import math
 from nav_msgs.msg import Odometry
 from geometry_msgs.msg import Twist, Quaternion
 from drive_stack.srv import Goal
-from utils import quaternion_to_heading, heading_to_quaternion
+from utils import quaternion_to_heading, heading_to_quaternion, minimize_angle
 from utils import dot_product, cross_product, scale, unit
 # tentatively removed, might need it to call services properly
 # from drive_stack.srv import Goal
@@ -289,7 +289,7 @@ class Driver(object):
         """
         loc_head = quaternion_to_heading(location.pose.pose.orientation)
         goal_head = quaternion_to_heading(goal.pose.pose.orientation)
-        return loc_head - goal_head
+        return minimize_angle(loc_head - goal_head)
 
     def dist(self, odom1, odom2):
         """
