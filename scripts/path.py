@@ -60,21 +60,38 @@ class Path(object):
             self.path.append(easy_Odom(x=0, y=0, v=0.0, heading=0.0, frame='map'))
             # out
             self.path.append(easy_Odom(x=0.5, y=0, v=0.0, heading=0.0, frame='map'))
-        elif triple == 'I':
-            # star
+        elif triple == 'halfI':
+            # start
             self.path.append(easy_Odom(x=2, y=2, v=0.5, heading=math.pi/2, frame='map'))
-            # out
-            self.path.append(easy_Odom(x=2, y=7, v=0.5, heading=math.pi/2, frame='map'))
+            self.path.append(easy_Odom(x=1.75, y=3, v=0.5, heading=math.pi/2, frame='map'))
+            # out 1
+            self.path.append(easy_Odom(x=1.75, y=7, v=0.5, heading=math.pi/2, frame='map'))
+            # out 2
+            self.path.append(easy_Odom(x=1.5, y=7.5, v=0.5, heading=math.pi/2, frame='map'))
             # over
-            self.path.append(easy_Odom(x=3, y=8, v=0.5, heading=0.0, frame='map'))
+            self.path.append(easy_Odom(x=2, y=8, v=0.5, heading=0.0, frame='map'))
             # turned around
-            self.path.append(easy_Odom(x=4, y=7, v=0.5, heading=-math.pi/2, frame='map'))
-            # back
-            self.path.append(easy_Odom(x=4, y=2, v=0.5, heading=-math.pi/2, frame='map'))
+            self.path.append(easy_Odom(x=2.5, y=7.5, v=0.5, heading=-math.pi/2, frame='map'))
+            # back 1
+            self.path.append(easy_Odom(x=2.25, y=7, v=0.5, heading=-math.pi/2, frame='map'))
+            # back 2
+            self.path.append(easy_Odom(x=2.25, y=2, v=0.5, heading=-math.pi/2, frame='map'))
+        elif triple == 'I':
+            # start
+            self.path.append(easy_Odom(x=2, y=2, v=0.5, heading=math.pi/2, frame='map'))
+            self.path.append(easy_Odom(x=1.75, y=3, v=0.5, heading=math.pi/2, frame='map'))
+            # out 1
+            self.path.append(easy_Odom(x=1.75, y=13, v=0.5, heading=math.pi/2, frame='map'))
+            # out 2
+            self.path.append(easy_Odom(x=1.5, y=13.5, v=0.5, heading=math.pi/2, frame='map'))
             # over
-            self.path.append(easy_Odom(x=3, y=1, v=0.5, heading=-math.pi, frame='map'))
-            # back to 0rigin
-            self.path.append(easy_Odom(x=2, y=2, v=0.0, heading=math.pi/2, frame='map'))
+            self.path.append(easy_Odom(x=2, y=14, v=0.5, heading=0.0, frame='map'))
+            # turned around
+            self.path.append(easy_Odom(x=2.5, y=13.5, v=0.5, heading=-math.pi/2, frame='map'))
+            # back 1
+            self.path.append(easy_Odom(x=2.25, y=13, v=0.5, heading=-math.pi/2, frame='map'))
+            # back 2
+            self.path.append(easy_Odom(x=2.25, y=2, v=0.5, heading=-math.pi/2, frame='map'))
         elif triple == 'III':
             # start
             self.path.append(easy_Odom(x=2, y=2, v=0.5, heading=math.pi/2, frame='map'))
@@ -211,6 +228,6 @@ class Path(object):
 
 if __name__ == '__main__':
     # pylint: disable=invalid-name
-    path = Path('I')
+    path = Path('halfI')
     # path = Path('III')
     path.run_server()
