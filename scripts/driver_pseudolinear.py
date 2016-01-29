@@ -223,7 +223,7 @@ class PseudoLinearDriver(driver.Driver):
         self.position = rospy.Subscriber('/base_pose_ground_truth', Odometry, self.process_position)
         rospy.loginfo('driver: node ready')
         rate = 20
-        steps = int(rate*2.0)
+        steps = int(rate*8.0)
         top_speed = 0.25
         increment = top_speed/(steps/4)
         rt = rospy.Rate(rate)
@@ -232,7 +232,7 @@ class PseudoLinearDriver(driver.Driver):
         initial_twist.linear.x = 0.0
         initial_twist.angular.z = 0.0
 
-        for i in range(0,steps):
+        for i in range(0,int(steps)):
             if (i < steps / 4):
                 initial_twist.linear.x += increment
             elif (i > 3*steps/4):
