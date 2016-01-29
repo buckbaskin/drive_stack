@@ -123,13 +123,13 @@ class PseudoLinearDriver(driver.Driver):
             rospy.loginfo('extreme case')
             ang_vel = 0.0 # TODO(buckbaskin): fix this
         else: # normal case
-            return_to_heading_gain = 2.0
-            return_to_line_gain = 2.0
-            rospy.loginfo('relative gain (line/heading): %f avg gain: %f' % 
-                (return_to_line_gain/return_to_heading_gain, 
-                (return_to_line_gain+return_to_heading_gain)/2,)
-            )
-            ang_vel = return_to_heading_gain*heading + return_to_line_gain*off
+            relative_gain = 1.0
+            avg_gain = 2.0
+
+            return_to_heading_gain = (2.0*abs(avg_gain))/(abs(relative_gain)+1)
+            return_to_line_gain = abs(relative_gain)*return_to_heading_gain
+
+            ang_vel = -return_to_heading_gain*heading + -return_to_line_gain*off
 
         return self.check_angular_limits(odom, ang_vel)
 
