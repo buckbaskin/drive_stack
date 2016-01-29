@@ -225,15 +225,12 @@ class PseudoLinearDriver(driver.Driver):
         for i in range(0, int(steps)):
             if i < steps / 4:
                 initial_twist.linear.x += increment
-            elif i > 3*steps/4:
-                initial_twist.linear.x -= increment
             else:
                 pass
             
             self.cmd_vel.publish(initial_twist)
             rt.sleep()
 
-        initial_twist.linear.x = 0.0
         self.cmd_vel.publish(initial_twist)
         
         self.state = 'running'
