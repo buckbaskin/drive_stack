@@ -70,14 +70,10 @@ class PseudoLinearDriver(driver.Driver):
         along, off, heading = self.calc_errors(odom, next_goal)
         # rospy.loginfo('aoh'+ str( (along, off, heading)) )
 
-        adjusted_heading = self.calc_adjusted_heading(heading, off)
-
-        extreme_case = abs(adjusted_heading) > .5
-
-        angular_vel = self.calc_angular_velocity(adjusted_heading, extreme_case, odom)
+        angular_vel = self.calc_angular_velocity(off, heading, odom)
 
         linear_vel = self.calc_linear_velocity(along, off, angular_vel,
-            next_goal.twist.twist.linear.x, extreme_case, odom)
+            next_goal.twist.twist.linear.x, odom)
 
         # linear and angular velocity are now within dx/dt, d2x/dt2 limits
         twist_out = Twist()
@@ -121,25 +117,24 @@ class PseudoLinearDriver(driver.Driver):
         return adjusted_heading
 
 
-    def calc_angular_velocity(self, adjusted_heading, extreme_case, odom):
+    def calc_angular_velocity(self, off, heading, odom):
+        extreme_case = False
         if extreme_case: # extreme case
-            if adjusted_heading < 0:
-                rospy.loginfo('extreme negative heading err w/ forward')
-                ang_vel = 0.25
-            else:
-                rospy.loginfo('extreme positive heading err w/ forward')
-                ang_vel = -0.25
+            rospy.loginfo('extreme case')
+            ang_vel = 0.0 # TODO(buckbaskin): fix this
         else: # normal case
-            # tuning parameters
-            # 2.7468 is an arbitrary value so that the atan value results in a
-            #  .5 at heading = +-.5
-            a = 10
-            b = 2.7468
-            ang_vel = -math.atan(a*adjusted_heading)/b
+            return_to_heading_gain = 2.0
+            return_to_line_gain = 2.0
+            rospy.loginfo('relative gain (line/heading): %f avg gain: %f' % 
+                (return_to_line_gain/return_to_heading_gain, 
+                (return_to_line_gain+return_to_heading_gain)/2,)
+            )
+            ang_vel = return_to_heading_gain*heading + return_to_line_gain*off
 
         return self.check_angular_limits(odom, ang_vel)
 
-    def calc_linear_velocity(self, along, off, angular_vel, goal_vel, extreme_case, odom):
+    def calc_linear_velocity(self, along, off, angular_vel, goal_vel, odom):
+        extreme_case = False
         if extreme_case: # extreme case
             linear_vel = .25
         else:
