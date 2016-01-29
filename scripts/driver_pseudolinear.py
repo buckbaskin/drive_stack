@@ -134,29 +134,24 @@ class PseudoLinearDriver(driver.Driver):
         return self.check_angular_limits(odom, ang_vel)
 
     def calc_linear_velocity(self, along, off, angular_vel, goal_vel, odom):
-        extreme_case = False
-        if extreme_case: # extreme case
+        linear_vel = goal_vel
+        
+        scaling_factor = (self.max_omega - (abs(angular_vel) - .1))/(self.max_omega)
+        scaling_factor = min(1, max(scaling_factor , 0))
+        rospy.loginfo('s: %f g: %f' % (scaling_factor, goal_vel,))
+        linear_vel = goal_vel*scaling_factor
+
+        if linear_vel < .25 and goal_vel > .25: 
+            # if the scaling factor brought it down to 0ish
+            # give it a min speed
             linear_vel = .25
-        else:
-            net_distance = math.sqrt(along*along+off*off)
-            if along < 0:
-                net_distance = -net_distance
-
-            # 2.7468 is an arbitrary value so that the atan value results in a
-            #  .5 at along error of = +-.5
-            # linear_vel = -math.atan(10*net_distance)/2.7468+goal_vel
+        elif linear_vel < .25 and goal_vel < .25:
+            # if goal was already pretty low, don't mess with it
             linear_vel = goal_vel
-
-
-            # the closer that angular vel gets to .5, the slower the robot moves
-            #  forward or backwards. Based on the way that the angular velocity is
-            #  calculated, the further away the robot is, the more it will correct
-            #  toward where it is supposed to be instead of moving forwards.
-            scaling_factor = (0.5-abs(angular_vel))/0.5
-            rospy.loginfo('dis: %f, l_v: %f, s_f: %f' % (net_distance, linear_vel, scaling_factor,))
-            scaling_factor = min(max(scaling_factor, 0.0), 1.0) # range 0 to 1
-            linear_vel = linear_vel*scaling_factor
-
+        else:
+            # linear vel is above a slow speed, so we don't need to worry
+            pass
+        
         return self.check_linear_limits(odom, linear_vel)
 
     def check_linear_limits(self, odom, linear_vel):
