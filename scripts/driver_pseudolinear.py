@@ -72,18 +72,6 @@ class PseudoLinearDriver(driver.Driver):
 
         adjusted_heading = self.calc_adjusted_heading(heading, off)
 
-        if abs(adjusted_heading) > .5: # approx 30 degrees
-            twist_out = Twist()
-            twist_out.linear.x = .1
-            if adjusted_heading < 0:
-                rospy.loginfo('extreme negative heading err w/ forward')
-                twist_out.angular.z = 0.25
-            else:
-                rospy.loginfo('extreme positive heading err w/ forward')
-                twist_out.angular.z = -0.25
-            self.cmd_vel.publish(twist_out)
-            return None
-
         angular_vel = self.calc_angular_velocity(adjusted_heading)
 
         linear_vel = self.calc_linear_velocity(along, off, angular_vel,
@@ -103,11 +91,6 @@ class PseudoLinearDriver(driver.Driver):
             self.cmd_vel.publish(twist_out)
             rospy.loginfo('Error in driver calculation')
             sys.exit(0)
-
-        # rospy.loginfo('normal state. '+str(adjusted_heading > 0)+' '+
-        #    str(angular_vel > 0))
-        # rospy.loginfo('head: %4f off: %4f adj: %4f' %
-        #    (heading, off, adjusted_heading,))
 
         self.cmd_vel.publish(twist_out)
 
@@ -137,42 +120,47 @@ class PseudoLinearDriver(driver.Driver):
 
 
     def calc_angular_velocity(self, adjusted_heading):
-        # 2.7468 is an arbitrary value so that the atan value results in a
-        #  .5 at heading = +-.5
-        ang_vel = -math.atan(10*adjusted_heading)/2.7468
-        if ang_vel > self.max_omega:
-            return self.max_omega
-        elif ang_vel < -self.max_omega:
-            return -self.max_omega
-        else:
-            return ang_vel
+        if abs(adjusted_heading) > .5: # extreme case
+            if adjusted_heading < 0:
+                rospy.loginfo('extreme negative heading err w/ forward')
+                ang_vel = 0.25
+            else:
+                rospy.loginfo('extreme positive heading err w/ forward')
+                ang_vel = -0.25
+        else: # normal case
+            # tuning parameters
+            # 2.7468 is an arbitrary value so that the atan value results in a
+            #  .5 at heading = +-.5
+            a = 10
+            b = 2.7468
+            ang_vel = -math.atan(a*adjusted_heading)/b
+
+        return check_angular_limits(ang_vel)
 
     def calc_linear_velocity(self, along, off, angular_vel, goal_vel):
-
-        net_distance = math.sqrt(along*along+off*off)
-        if along < 0:
-            net_distance = -net_distance
-
-        # 2.7468 is an arbitrary value so that the atan value results in a
-        #  .5 at along error of = +-.5
-        linear_vel = -math.atan(10*net_distance)/2.7468+goal_vel
-
-
-        # the closer that angular vel gets to .5, the slower the robot moves
-        #  forward or backwards. Based on the way that the angular velocity is
-        #  calculated, the further away the robot is, the more it will correct
-        #  toward where it is supposed to be instead of moving forwards.
-        scaling_factor = (0.5-abs(angular_vel))/0.5
-        rospy.loginfo('dis: %f, l_v: %f, s_f: %f' % (net_distance, linear_vel, scaling_factor,))
-        scaling_factor = min(max(scaling_factor, 0.0), 1.0) # range 0 to 1
-        linear_vel = linear_vel*scaling_factor
-
-        if linear_vel > self.max_v:
-            return self.max_v
-        elif linear_vel < 0.0:
-            return 0.0
+        if abs(adjusted_heading) > .5: # extreme case
+            linear_vel = .25
         else:
-            return linear_vel
+            net_distance = math.sqrt(along*along+off*off)
+            if along < 0:
+                net_distance = -net_distance
+
+            # 2.7468 is an arbitrary value so that the atan value results in a
+            #  .5 at along error of = +-.5
+            # linear_vel = -math.atan(10*net_distance)/2.7468+goal_vel
+            linear_vel = goal_vel
+
+
+            # the closer that angular vel gets to .5, the slower the robot moves
+            #  forward or backwards. Based on the way that the angular velocity is
+            #  calculated, the further away the robot is, the more it will correct
+            #  toward where it is supposed to be instead of moving forwards.
+            scaling_factor = (0.5-abs(angular_vel))/0.5
+            rospy.loginfo('dis: %f, l_v: %f, s_f: %f' % (net_distance, linear_vel, scaling_factor,))
+            scaling_factor = min(max(scaling_factor, 0.0), 1.0) # range 0 to 1
+            linear_vel = linear_vel*scaling_factor
+
+        return check_linear_limits(linear_vel)
 
     def check_linear_limits(self, odom, linear_vel):
         """
