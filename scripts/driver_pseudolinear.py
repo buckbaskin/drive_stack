@@ -123,8 +123,8 @@ class PseudoLinearDriver(driver.Driver):
             rospy.loginfo('extreme case')
             ang_vel = 0.0 # TODO(buckbaskin): fix this
         else: # normal case
-            relative_gain = 2.0
-            avg_gain = 4.0
+            relative_gain = 4.0
+            avg_gain = 8.0
 
             return_to_heading_gain = (2.0*abs(avg_gain))/(abs(relative_gain)+1)
             return_to_line_gain = abs(relative_gain)*return_to_heading_gain
@@ -141,11 +141,13 @@ class PseudoLinearDriver(driver.Driver):
         rospy.loginfo('s: %f g: %f' % (scaling_factor, goal_vel,))
         linear_vel = goal_vel*scaling_factor
 
-        if linear_vel < .25 and goal_vel > .25: 
+        florence = .15
+
+        if linear_vel < florence and goal_vel > florence: 
             # if the scaling factor brought it down to 0ish
             # give it a min speed
-            linear_vel = .25
-        elif linear_vel < .25 and goal_vel < .25:
+            linear_vel = florence
+        elif linear_vel < florence and goal_vel < florence:
             # if goal was already pretty low, don't mess with it
             linear_vel = goal_vel
         else:
@@ -203,7 +205,7 @@ class PseudoLinearDriver(driver.Driver):
         self.position = rospy.Subscriber('/base_pose_ground_truth', Odometry, self.process_position)
         rospy.loginfo('driver: node ready')
         rate = 20
-        steps = int(rate*8.0)
+        steps = int(rate*5.0)
         top_speed = 0.25
         increment = top_speed/(steps/4)
         rt = rospy.Rate(rate)
