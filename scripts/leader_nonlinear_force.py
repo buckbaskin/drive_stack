@@ -56,7 +56,7 @@ class ForceLeader(leader.Leader):
         # pylint: disable=invalid-name
         # dt, v, w, are accurately describing what I want in this case
 
-        dt = .1
+        dt = .3
 
 
 
@@ -68,7 +68,7 @@ class ForceLeader(leader.Leader):
         count = 2
 
         while along < -0.01 and not rospy.is_shutdown():
-            if count > 200:
+            if count > 500:
                 rospy.loginfo('path overflow')
                 break
             current = StateModel(next_)
@@ -81,7 +81,7 @@ class ForceLeader(leader.Leader):
             # pylint: disable=invalid-name
             # v, w, are accurately describing what I want in this case
             w = heading_err/dt*0.75
-            v = 0.55        
+            v = start.twist.twist.linear.x     
             # TODO(buckbaskin): calculate something smart based on vel
             # profile from start to end
             # possibly do vel profile based on distance, slow down proportional to
@@ -288,7 +288,7 @@ class StateModel(object):
         Does not yet take full advantage of state stored in above
         And does not check acceleration bounds for example
         '''
-        accel_max = .1
+        accel_max = 1
         alpha_max = 1
 
         delta_v_req = v - self.v
