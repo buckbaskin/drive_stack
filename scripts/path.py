@@ -183,6 +183,8 @@ class Path(object):
             self.path.append(easy_Odom(x=2, y=12.5, v=0.5, heading=0.0, frame='map'))
             self.path.append(easy_Odom(x=3.5-path_width, y=13-path_width/2, v=0.5, heading=0.0, frame='map'))
             self.path.append(easy_Odom(x=3.5, y=13-3*path_width/2, v=0.5, heading=-pi/2, frame='map'))
+            # finish without spiral
+            self.path.append(easy_Odom(x=3.0, y=2.5, v=0.5, heading=-pi/2, frame='map'))
 
             # # inside out spiral
             # # center
