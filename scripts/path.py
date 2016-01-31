@@ -36,6 +36,7 @@ from drive_stack.srv import Goal, GoalResponse
 
 from utils import heading_to_quaternion
 from utils import easy_Odom
+from utils import drange as range
 
 class Path(object):
     """
@@ -93,36 +94,34 @@ class Path(object):
             # offset
             self.path.append(easy_Odom(x=1.75, y=3, v=0.5, heading=math.pi/2, frame='map'))
             # out 1
-            self.path.append(easy_Odom(x=1.75, y=13, v=0.5, heading=math.pi/2, frame='map'))
+            self.path.append(easy_Odom(x=1.75, y=10, v=0.5, heading=math.pi/2, frame='map'))
             # out 2
-            self.path.append(easy_Odom(x=1.5, y=13.5, v=0.5, heading=math.pi/2, frame='map'))
+            self.path.append(easy_Odom(x=1.5, y=10.5, v=0.5, heading=math.pi/2, frame='map'))
             # over
-            self.path.append(easy_Odom(x=2, y=14, v=0.5, heading=0.0, frame='map'))
+            self.path.append(easy_Odom(x=2, y=11, v=0.5, heading=0.0, frame='map'))
             # turned around
-            self.path.append(easy_Odom(x=2.5, y=13.5, v=0.5, heading=-math.pi/2, frame='map'))
+            self.path.append(easy_Odom(x=2.5, y=10.5, v=0.5, heading=-math.pi/2, frame='map'))
             # back 1
-            self.path.append(easy_Odom(x=2.25, y=13, v=0.5, heading=-math.pi/2, frame='map'))
+            self.path.append(easy_Odom(x=2.25, y=10, v=0.5, heading=-math.pi/2, frame='map'))
             # back 2
-            self.path.append(easy_Odom(x=2.25, y=2, v=0.5, heading=-math.pi/2, frame='map'))
+            self.path.append(easy_Odom(x=2.25, y=2.5, v=0.5, heading=-math.pi/2, frame='map'))
         elif triple == 'III':
             # start
-            self.path.append(easy_Odom(x=2, y=2, v=0.5, heading=math.pi/2, frame='map'))
-            # start cross 1
-            self.path.append(easy_Odom(x=3, y=3, v=0.5, heading=0.0, frame='map'))
-            # end cross 1
-            self.path.append(easy_Odom(x=4, y=3, v=0.5, heading=0.0, frame='map'))
-            # up
-            self.path.append(easy_Odom(x=5, y=4, v=0.5, heading=math.pi/2, frame='map'))
-            # start cross 2
-            self.path.append(easy_Odom(x=4, y=5, v=0.5, heading=-math.pi, frame='map'))
-            # end cross 2
-            self.path.append(easy_Odom(x=2, y=5, v=0.5, heading=-math.pi, frame='map'))
-            # up
-            self.path.append(easy_Odom(x=1, y=6, v=0.5, heading=math.pi/2, frame='map'))
-            # start cross 3
-            self.path.append(easy_Odom(x=2, y=7, v=0.0, heading=0.0, frame='map'))
-            # end cross 3
-            self.path.append(easy_Odom(x=4, y=7, v=0.5, heading=0.0, frame='map'))
+            self.path.append(easy_Odom(x=1, y=1, v=0.5, heading=math.pi/2, frame='map'))
+            # start 2
+            self.path.append(easy_Odom(x=1, y=2, v=0.5, heading=math.pi/2, frame='map'))
+            # back and forth
+            path_width = float(.75)
+
+            for i in range(3.0, 13.0, 1.5):
+                self.path.append(easy_Odom(x=2, y=i+path_width/2, v=0.5, heading=0.0, frame='map'))
+                self.path.append(easy_Odom(x=5, y=i+path_width/2, v=0.5, heading=0.0, frame='map'))
+                self.path.append(easy_Odom(x=5+path_width/2, y=i+path_width, v=0.5, heading=0.0, frame='map'))
+                self.path.append(easy_Odom(x=5, y=i+path_width*3/2, v=0.5, heading=0.0, frame='map'))
+                self.path.append(easy_Odom(x=2, y=i+path_width*3/2, v=0.5, heading=0.0, frame='map'))
+                self.path.append(easy_Odom(x=2-path_width/2, y=i+2*path_width, v=0.5, heading=0.0, frame='map'))
+
+            ###
             # down
             self.path.append(easy_Odom(x=5, y=5, v=0.5, heading=-math.pi/2, frame='map'))
             # back
@@ -240,6 +239,6 @@ class Path(object):
 
 if __name__ == '__main__':
     # pylint: disable=invalid-name
-    path = Path('roltatedI')
+    path = Path('III')
     # path = Path('III')
     path.run_server()
