@@ -218,6 +218,7 @@ class Path(object):
             # garage
             self.path.append(easy_Odom(x=4.0, y=2, v=0.5, heading=pi, frame='map'))
             self.path.append(easy_Odom(x=3.0, y=2, v=0.5, heading=pi, frame='map'))
+
         elif triple == 'snownado':
             # start
             self.path.append(easy_Odom(x=2, y=1, v=0.5, heading=pi/2, frame='map'))
@@ -391,6 +392,5 @@ class Path(object):
 
 if __name__ == '__main__':
     # pylint: disable=invalid-name
-    path = Path('demo')
-    # path = Path('III')
+    path = Path('snownado')
     path.run_server()
