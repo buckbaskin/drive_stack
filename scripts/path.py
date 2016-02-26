@@ -115,15 +115,6 @@ class Path(object):
             # back and forth
             path_width = float(.75)
 
-            # lateral passes
-            for i in range(3.0, 12.0, 1.5):
-                self.path.append(easy_Odom(x=2, y=i+path_width/2, v=0.5, heading=0.0, frame='map'))
-                self.path.append(easy_Odom(x=5, y=i+path_width/2, v=0.5, heading=0.0, frame='map'))
-                self.path.append(easy_Odom(x=5+path_width/2, y=i+path_width, v=0.5, heading=pi/2, frame='map'))
-                self.path.append(easy_Odom(x=5, y=i+path_width*3/2, v=0.5, heading=pi, frame='map'))
-                self.path.append(easy_Odom(x=2, y=i+path_width*3/2, v=0.5, heading=pi, frame='map'))
-                self.path.append(easy_Odom(x=2-path_width/2, y=i+2*path_width, v=0.5, heading=pi/2, frame='map'))
-
             # last across
             self.path.append(easy_Odom(x=2, y=12.5, v=0.5, heading=0.0, frame='map'))
             self.path.append(easy_Odom(x=3.5-path_width, y=13-path_width/2, v=0.5, heading=0.0, frame='map'))
